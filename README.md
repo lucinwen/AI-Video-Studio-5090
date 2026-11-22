@@ -137,7 +137,7 @@ The repository now includes a registry-driven Python pipeline layer in `studio/`
 Read [docs/IMAGE_VIDEO_PIPELINES.zh-CN.md](docs/IMAGE_VIDEO_PIPELINES.zh-CN.md). Initialize a local registry with:
 
 ```powershell
-python -m studio.cli --root "E:\\AI-Video-Studio" init
+python -m studio.cli --root "E:\AI-Video-Studio" init
 ```
 
 The example registry is intentionally disabled until the local agent exports real ComfyUI API-format workflows and maps actual node IDs/inputs. This repository does not claim that image models are installed or that the pipelines have already run on the user's RTX 5090.

@@ -36,3 +36,7 @@ Real API workflow JSON and node bindings must be exported/configured from the ac
 ## Validation boundary
 
 Repository code and tests are committed, but they have not been executed on the user's local RTX 5090 in this session. The local Codex must run the unit tests, configure real API workflows and generate actual outputs before marking those routes SMOKE_TESTED or QUALITY_REVIEWED.
+
+## Automated test result
+
+GitHub Actions run for commit 5b06633aa45f3de47c9109a611004d6311108efd completed successfully. The standard-library unit tests and CLI help check passed on Python 3.10, 3.11 and 3.12. This validates the generic code path on CI; it does not validate the user's Windows PowerShell runtime, local ComfyUI node graph, RTX 5090 GPU inference, or generated media.

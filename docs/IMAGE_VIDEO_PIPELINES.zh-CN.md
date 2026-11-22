@@ -71,7 +71,7 @@ ComfyUI 官方支持本地 API、图像生成、图像编辑和视频工作流�
 
     python -m studio.cli --root "E:\AI-Video-Studio" run prompt-to-image-to-video --prompt "A young woman in a red coat standing in a rainy neon-lit Tokyo street, cinematic composition" --video-prompt "She slowly turns toward the camera as rain falls; subtle dolly-in, natural cloth movement" --negative-prompt "deformed hands, flicker, duplicate person" --style-prompt "cinematic, realistic lighting, detailed environment" --project "tokyo-rain" --seed 20261122 --image-index 0
 
-生图阶段会保存所有候选图片，默认选择第 0 张作为关键帧；用 --image-index 1 选择第二张。选中的图像会通过 ComfyUI upload API 送入图生视频工作流。
+生图阶段会保存所有候选图片。不传 --image-index 时，CLI 会列出候选图并等待你交互选择；自动化运行时可指定 --image-index 0 或其他序号。选中的图像会通过 ComfyUI upload API 送入图生视频工作流。
 
 ### B. 已有图片 + 提示词 → 视频
 

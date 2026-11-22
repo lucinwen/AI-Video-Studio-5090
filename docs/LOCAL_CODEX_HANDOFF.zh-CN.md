@@ -206,12 +206,12 @@
 从 RepoRoot 执行：
 
 ```powershell
-python -m studio.cli --root "E:\\AI-Video-Studio" init
+python -m studio.cli --root "E:\AI-Video-Studio" init
 ```
 
 这会在 StudioRoot 下创建 image/video workflow API 目录，并将仓库的 example registry 复制到：
 
-`E:\\AI-Video-Studio\\00_CONTROL\\manifests\\image-video-pipeline.json`
+`E:\AI-Video-Studio\00_CONTROL\manifests\image-video-pipeline.json`
 
 若本机 registry 已存在，初始化不会覆盖它。
 
@@ -219,14 +219,14 @@ python -m studio.cli --root "E:\\AI-Video-Studio" init
 
 在 ComfyUI 中分别验证一条 text-to-image 和一条 image-to-video 工作流，导出 API-format JSON 到：
 
-- `E:\\AI-Video-Studio\\03_WORKFLOWS\\api\\image\\text_to_image\\workflow_api.json`
-- `E:\\AI-Video-Studio\\03_WORKFLOWS\\api\\video\\image_to_video\\workflow_api.json`
+- `E:\AI-Video-Studio\03_WORKFLOWS\api\image\text_to_image\workflow_api.json`
+- `E:\AI-Video-Studio\03_WORKFLOWS\api\video\image_to_video\workflow_api.json`
 
 编辑本机 registry，填写真实 node IDs、inputs、model_ids。不要把普通 UI workflow JSON 当作 API prompt graph；不要保留 SET_NODE_ID 占位符。完成后执行：
 
 ```powershell
-python -m studio.cli --root "E:\\AI-Video-Studio" validate
-python -m studio.cli --root "E:\\AI-Video-Studio" health
+python -m studio.cli --root "E:\AI-Video-Studio" validate
+python -m studio.cli --root "E:\AI-Video-Studio" health
 python -m unittest discover -s tests -v
 ```
 
