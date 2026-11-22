@@ -58,9 +58,12 @@ if (-not $main) { throw "Could not find expected ComfyUI\main.py in extracted re
 $sourceRoot = $main.Directory.Parent.FullName
 $embeddedPython = Join-Path $sourceRoot "python_embeded\python.exe"
 if (-not (Test-Path $embeddedPython)) { throw "Expected embedded Python was not found at $embeddedPython. Runtime layout changed; inspect release before proceeding." }
-if (-not $PSCmdlet.ShouldProcess($runtimeRoot,"Move extracted ComfyUI Portable runtime into production location")) { return }
-New-Item -ItemType Directory -Force -Path (Split-Path $runtimeRoot -Parent) | Out-Null
-Move-Item -LiteralPath $sourceRoot -Destination $runtimeRoot
+if (-not $PSCmdlet.ShouldProcess($runtimeRoot,"Move extracted ComfyUI Portable files into production location")) { return }
+New-Item -ItemType Directory -Force -Path $runtimeRoot | Out-Null
+Get-ChildItem -LiteralPath $sourceRoot -Force | ForEach-Object {
+  Move-Item -LiteralPath $_.FullName -Destination $runtimeRoot
+}
+Remove-Item -LiteralPath $sourceRoot -Force
 $comfyRoot = Join-Path $runtimeRoot "ComfyUI"
 $externalConfig = @"
 comfyui:
@@ -83,8 +86,10 @@ comfyui:
   model_patches: model_patches/
   style_models: style_models/
   frame_interpolation: frame_interpolation/
-  custom_nodes: custom_nodes/
 "@
+foreach ($modelFolder in @("checkpoints","configs","loras","vae","text_encoders","clip","clip_vision","diffusion_models","unet","controlnet","embeddings","upscale_models","latent_upscale_models","audio_encoders","model_patches","style_models","frame_interpolation")) {
+  New-Item -ItemType Directory -Force -Path (Join-Path $modelsRoot $modelFolder) | Out-Null
+}
 $configPath = Join-Path $comfyRoot "extra_model_paths.yaml"
 if (Test-Path $configPath) {
   Copy-Item $configPath (Join-Path $logsRoot ("extra_model_paths.backup-" + (Get-Date -Format "yyyyMMdd-HHmmss") + ".yaml"))
@@ -107,6 +112,7 @@ cd /d "$comfyRoot"
 "..\python_embeded\python.exe" main.py --listen 127.0.0.1 --port 8188 --output-directory "$RootPath\06_OUTPUTS" --input-directory "$RootPath\04_ASSETS" --user-directory "$RootPath\00_CONTROL\comfy-user"
 endlocal
 "@
+New-Item -ItemType Directory -Force -Path (Join-Path $RootPath "scripts") | Out-Null
 Set-Content -LiteralPath (Join-Path $RootPath "scripts\launch-comfyui.bat") -Value $launch -Encoding ASCII
 $pythonVersion = (& $embeddedPython --version 2>&1 | Out-String).Trim()
 $torchInfo = & $embeddedPython -c "import torch; print(torch.__version__); print(torch.version.cuda); print(torch.cuda.is_available()); print(torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'NO_CUDA')" 2>&1
@@ -115,6 +121,8 @@ $report = [ordered]@{
   distribution="ComfyUI Windows NVIDIA Portable"
   source_url=$ComfyUiReleaseUrl
   archive_path=$archive
+  archive_sha256=(Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash
+  archive_size_bytes=(Get-Item -LiteralPath $archive).Length
   runtime_path=$runtimeRoot
   comfyui_path=$comfyRoot
   python=$pythonVersion
