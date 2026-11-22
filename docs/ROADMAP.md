@@ -79,3 +79,7 @@ Status: COMMITTED_TO_GIT / NOT_RUN_ON_TARGET
 - [ ] Verify ComfyUI API and CUDA on RTX 5090.
 - [ ] Implement model dependency resolver and resumable model download queue.
 - [ ] Implement workflow packs and real Wan/LTX generation tests.
+
+- [x] Generic resumable model artifact downloader with explicit license/hash/size gates.
+- [ ] Automatic workflow-to-model dependency graph resolver.
+- [ ] Curated, fully populated Wan/LTX model-pack manifests with exact official file revisions, sizes, licenses, and checksums.
