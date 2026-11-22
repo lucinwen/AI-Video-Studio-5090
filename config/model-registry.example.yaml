@@ -1,0 +1,33 @@
+schema_version: 1
+# Candidate entries are intentionally PLANNED. Agent must resolve exact revision,
+# official files, size, license, and Windows/Blackwell support before download.
+models:
+  - id: wan-2.2-5b-ti2v
+    family: Wan 2.2
+    task: [text-to-video, image-to-video]
+    source:
+      code: https://github.com/Wan-Video/Wan2.2
+      comfy_examples: https://github.com/comfyanonymous/ComfyUI_examples/tree/master/wan22
+    status: PLANNED
+    hardware_profile: rtx5090-32gb-conservative
+    download_requires_review: true
+  - id: wan-2.2-14b-t2v
+    family: Wan 2.2
+    task: [text-to-video]
+    source:
+      code: https://github.com/Wan-Video/Wan2.2
+      comfy_workflows: https://github.com/Comfy-Org/workflow_templates
+    status: PLANNED
+    hardware_profile: rtx5090-32gb-quantized-offload-test
+    download_requires_review: true
+  - id: ltx-2.5
+    family: LTX-2.5
+    task: [text-to-video, image-to-video, first-last-frame, audio-video]
+    source:
+      code: https://github.com/Lightricks/LTX-2
+      comfy_nodes: https://github.com/Lightricks/ComfyUI-LTXVideo
+      docs: https://docs.ltx.io/open-source-model/integration-tools/comfy-ui
+    candidate_precision: [bf16, int8, nvfp4-blackwell]
+    status: PLANNED
+    hardware_profile: rtx5090-32gb-boundary-test
+    download_requires_review: true
