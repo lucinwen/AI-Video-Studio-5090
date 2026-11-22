@@ -83,3 +83,17 @@ Model access, licenses, gated downloads, and commercial-use terms must be checke
 ## Current status
 
 This repository contains the deployment handbook and engineering contract. It does **not** claim that the workstation has already been installed or that any model has been tested on the user's machine. The local agent performs that work and writes machine-specific results to the local deployment directory (not to Git by default).
+
+## Executable bootstrap layer
+
+The repository now includes conservative first-run scripts:
+- [PREFLIGHT.bat](PREFLIGHT.bat) — one-click, read-only Windows hardware/software inventory.
+- [bootstrap/Invoke-Preflight.ps1](bootstrap/Invoke-Preflight.ps1) — writes local JSON/Markdown reports under LocalAppData.
+- [bootstrap/Initialize-Workspace.ps1](bootstrap/Initialize-Workspace.ps1) — creates the SSD directory tree only after the agent confirms the actual drive letter; supports `-WhatIf`.
+- [bootstrap/Invoke-Doctor.ps1](bootstrap/Invoke-Doctor.ps1) — starter diagnostics.
+- [bootstrap/Start-Studio.ps1](bootstrap/Start-Studio.ps1) — guarded launcher for verified Portable/source layouts; it refuses global Python fallback.
+- [config/workstation.example.yaml](config/workstation.example.yaml), model and workflow registry templates.
+
+**Important:** These scripts are starter bootstrap tools, not a finished unattended installer. The first local action should be `PREFLIGHT.bat`. Do not run workspace initialization until the Samsung volume is positively identified. Runtime/model installation is intentionally staged and must be implemented/tested on the target PC.
+
+See [docs/BOOTSTRAP_SCRIPTS.md](docs/BOOTSTRAP_SCRIPTS.md) and [docs/BLACKWELL_PROFILE.md](docs/BLACKWELL_PROFILE.md).
