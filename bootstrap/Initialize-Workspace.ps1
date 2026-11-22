@@ -38,6 +38,19 @@ if (-not (Test-Path $marker)) {
   $obj = [ordered]@{ created_at=(Get-Date).ToString("o"); root=$resolvedRoot; volume_label=$volume.FileSystemLabel; filesystem=$volume.FileSystem; initial_free_bytes=$volume.SizeRemaining; policy="Keep at least 10-15% free; never auto-delete source assets or approved outputs." }
   if ($PSCmdlet.ShouldProcess($marker,"Write workspace marker")) { $obj | ConvertTo-Json -Depth 4 | Set-Content -Encoding UTF8 $marker }
 }
+$repoRoot = Split-Path -Parent $PSScriptRoot
+$templateCopies = @(
+  @{ source=(Join-Path $repoRoot "config\workstation.example.yaml"); target=(Join-Path $resolvedRoot "00_CONTROL\config\workstation.yaml") },
+  @{ source=(Join-Path $repoRoot "config\model-registry.example.yaml"); target=(Join-Path $resolvedRoot "00_CONTROL\manifests\model-registry.yaml") },
+  @{ source=(Join-Path $repoRoot "config\workflow-registry.example.yaml"); target=(Join-Path $resolvedRoot "00_CONTROL\manifests\workflow-registry.yaml") }
+)
+foreach ($item in $templateCopies) {
+  if ((Test-Path $item.source) -and -not (Test-Path $item.target)) {
+    if ($PSCmdlet.ShouldProcess($item.target,"Copy starter configuration without overwriting")) {
+      Copy-Item -LiteralPath $item.source -Destination $item.target
+    }
+  }
+}
 Write-Host "Workspace directory tree ready: $resolvedRoot" -ForegroundColor Green
 Write-Host "Free space at initialization: $freeGiB GiB"
 Write-Host "No formatting, partitioning, drive-letter changes, or deletion performed."
