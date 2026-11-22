@@ -1,0 +1,32 @@
+schema_version: 1
+workflows:
+  - id: image-smoke-test
+    family: image
+    status: PLANNED
+    acceptance: "Generate one small image and verify output decode."
+  - id: wan22-5b-t2v
+    family: text-to-video
+    status: PLANNED
+    model_ids: [wan-2.2-5b-ti2v]
+  - id: wan22-5b-i2v
+    family: image-to-video
+    status: PLANNED
+    model_ids: [wan-2.2-5b-ti2v]
+  - id: wan22-14b-t2v
+    family: text-to-video
+    status: PLANNED
+    model_ids: [wan-2.2-14b-t2v]
+  - id: ltx25-t2v-audio
+    family: audio-video
+    status: PLANNED
+    model_ids: [ltx-2.5]
+  - id: ltx25-i2v
+    family: image-to-video
+    status: PLANNED
+    model_ids: [ltx-2.5]
+  - id: video-upscale
+    family: finishing
+    status: PLANNED
+  - id: frame-interpolation
+    family: finishing
+    status: PLANNED
