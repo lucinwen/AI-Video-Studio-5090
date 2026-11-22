@@ -41,6 +41,19 @@ class WorkflowTests(unittest.TestCase):
             with self.assertRaises(RegistryError):
                 validate_api_workflow(path, [{"node_id": "1", "input": "missing", "source": "x"}])
 
+    def test_optional_binding_requires_a_real_target(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "workflow.json"
+            graph = {"1": {"class_type": "CLIPTextEncode", "inputs": {"text": ""}}}
+            path.write_text(json.dumps(graph), encoding="utf-8")
+            binding = {"node_id": "1", "input": "text", "source": "prompt", "required": False}
+            self.assertEqual(apply_bindings(validate_api_workflow(path, [binding]), [binding], {}), graph)
+            for invalid_target in ({"node_id": "9"}, {"input": "missing"}):
+                with self.subTest(invalid_target=invalid_target), self.assertRaisesRegex(
+                    RegistryError, "does not exist"
+                ):
+                    validate_api_workflow(path, [binding | invalid_target])
+
 
 if __name__ == "__main__":
     unittest.main()

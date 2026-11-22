@@ -44,6 +44,35 @@ class RegistryTests(unittest.TestCase):
             loaded = load_registry(registry_path, root)
             self.assertFalse(loaded["workflows"]["text_to_image"]["enabled"])
 
+    def test_media_validation_resolves_tools_inside_studio_root(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "studio"
+            root.mkdir()
+            tools = root / "tools"
+            tools.mkdir()
+            (tools / "ffprobe.exe").touch()
+            (tools / "ffmpeg.exe").touch()
+            outside = root.parent / "ffmpeg.exe"
+            outside.touch()
+            registry_path = root / "registry.json"
+            settings = {
+                "schema_version": 1,
+                "workflows": {},
+                "media_validation": {"ffprobe": "tools/ffprobe.exe", "ffmpeg": "tools/ffmpeg.exe"},
+            }
+            registry_path.write_text(json.dumps(settings), encoding="utf-8")
+            self.assertEqual(
+                load_registry(registry_path, root)["media_validation"]["ffprobe"],
+                (tools / "ffprobe.exe").resolve(),
+            )
+            for invalid_path in ("../ffmpeg.exe", str(outside.resolve()), "missing.exe"):
+                with self.subTest(invalid_path=invalid_path), self.assertRaisesRegex(
+                    RegistryError, r"media_validation.ffmpeg"
+                ):
+                    settings["media_validation"]["ffmpeg"] = invalid_path
+                    registry_path.write_text(json.dumps(settings), encoding="utf-8")
+                    load_registry(registry_path, root)
+
 
 if __name__ == "__main__":
     unittest.main()

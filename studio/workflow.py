@@ -97,7 +97,11 @@ def validate_api_workflow(path: Path, bindings: list[dict[str, Any]]) -> dict[st
     if not graph:
         raise RegistryError(f"API workflow is empty: {path}")
     for node_id, node in graph.items():
-        if not isinstance(node, dict) or "class_type" not in node or "inputs" not in node:
+        if (
+            not isinstance(node, dict)
+            or not isinstance(node.get("class_type"), str)
+            or not isinstance(node.get("inputs"), dict)
+        ):
             raise RegistryError(
                 f"{path} does not look like a ComfyUI API-format workflow; "
                 f"node {node_id!r} is missing class_type/inputs."
@@ -105,12 +109,10 @@ def validate_api_workflow(path: Path, bindings: list[dict[str, Any]]) -> dict[st
     for binding in bindings:
         node_id = str(binding.get("node_id", ""))
         input_name = str(binding.get("input", ""))
-        required = binding.get("required", True)
+        if not binding.get("source"):
+            raise RegistryError(f"{path}: binding {node_id}:{input_name} is missing a source")
         if node_id not in graph:
-            if required:
-                raise RegistryError(f"{path}: binding node {node_id!r} does not exist")
-            continue
+            raise RegistryError(f"{path}: binding node {node_id!r} does not exist")
         if input_name not in graph[node_id].get("inputs", {}):
-            if required:
-                raise RegistryError(f"{path}: binding input {node_id}:{input_name} does not exist")
+            raise RegistryError(f"{path}: binding input {node_id}:{input_name} does not exist")
     return graph

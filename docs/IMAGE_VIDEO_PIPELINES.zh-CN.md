@@ -27,7 +27,7 @@ ComfyUI 官方支持本地 API、图像生成、图像编辑和视频工作流�
 
 ## 工作站目录
 
-在 E:\AI-Video-Studio（不是 Git 仓库内部）：
+下列路径相对于工作站根目录。源码仓库单独管理。
 
     00_CONTROL\manifests\image-video-pipeline.json
     03_WORKFLOWS\api\image\text_to_image\workflow_api.json
@@ -37,56 +37,59 @@ ComfyUI 官方支持本地 API、图像生成、图像编辑和视频工作流�
     05_PROJECTS\<project>\runs\<run-id>\videos
     05_PROJECTS\<project>\runs\<run-id>\inputs
     05_PROJECTS\<project>\runs\<run-id>\metadata\run.json
+    05_PROJECTS\<project>\runs\<run-id>\metadata\<workflow-key>.api.json
 
 真实 API 工作流必须从本机已安装并成功运行的 ComfyUI workflow 导出。仓库不提供伪造的节点图，也不把占位节点 ID 当成可运行工作流。
 
 ## 初始化
 
-在 Git 仓库根目录执行：
+在 Git 仓库根目录运行以下命令，将 `<StudioRoot>` 替换为工作站根目录。Windows Portable 内嵌 Python 可以用同一入口，命令中的 `python` 换成内嵌的 `python.exe` 路径。
 
-    python -m studio.cli --root "E:\AI-Video-Studio" init
+    python run_studio.py --root "<StudioRoot>" init
 
-该命令创建工作流目录，并在本机 registry 不存在时复制 example。已存在的 registry 不会被覆盖。
+该命令创建工作流目录，并在本机 registry 缺失时从 example 初始化。已有 registry 会保留。标准 Python 也支持 `python -m studio.cli`。
 
 ## 配置真实工作流
 
 1. 在 ComfyUI 中先单独运行一条 text-to-image 工作流和一条 image-to-video 工作流。
 2. 从 ComfyUI 导出 API format JSON（不是普通 UI workflow JSON）。
 3. 将 API JSON 分别保存到：
-   - E:\AI-Video-Studio\03_WORKFLOWS\api\image\text_to_image\workflow_api.json
-   - E:\AI-Video-Studio\03_WORKFLOWS\api\video\image_to_video\workflow_api.json
-4. 编辑 E:\AI-Video-Studio\00_CONTROL\manifests\image-video-pipeline.json：
+   - `03_WORKFLOWS/api/image/text_to_image/workflow_api.json`
+   - `03_WORKFLOWS/api/video/image_to_video/workflow_api.json`
+4. 编辑本机的 `00_CONTROL/manifests/image-video-pipeline.json`，按图中的节点与输入配置绑定。
    - 把 SET_NODE_ID 换成 API JSON 中真实 node ID；
    - input 必须是该节点 inputs 对象中真实存在的字段；
    - text-to-image 至少绑定正向提示词和 seed；
    - image-to-video 至少绑定 LoadImage.image 与 motion prompt；
-   - 按工作流实际情况绑定 negative prompt、camera prompt、style prompt；
-   - 填写真实 model_ids 和 revision。
+   - 图中有独立输入时才绑定 negative prompt、camera prompt 或 style prompt。单文本输入的图生视频工作流可以把镜头动作写进主动作提示词；
+   - 使用 `model_ids` 和 `model_revisions` 记录所用文件及其锁定版本。
 5. 只有模型、节点、API JSON 和绑定均可用时，才设置 enabled=true。
-6. 执行 validate；任何占位符、缺失节点或字段都会导致验证失败。
+6. 执行 `python run_studio.py --root "<StudioRoot>" validate`。每条绑定都必须指向真实节点及输入，即使参数值可省略。
+
+在 registry 顶层设置可选的 `media_validation` 对象以启用自动检查。将 `ffprobe` 和 `ffmpeg` 指向工作站根目录内的实际可执行文件，值使用相对于根目录的路径。Studio 用 FFprobe 读取流、时长和帧数，再用 FFmpeg 完整解码视频流及存在的音频流。失败的检查会中止本次验收。
 
 ## 使用方式
 
 ### A. 纯提示词 → 图片 → 视频
 
-    python -m studio.cli --root "E:\AI-Video-Studio" run prompt-to-image-to-video --prompt "A young woman in a red coat standing in a rainy neon-lit Tokyo street, cinematic composition" --video-prompt "She slowly turns toward the camera as rain falls; subtle dolly-in, natural cloth movement" --negative-prompt "deformed hands, flicker, duplicate person" --style-prompt "cinematic, realistic lighting, detailed environment" --project "tokyo-rain" --seed 20261122 --image-index 0
+    python run_studio.py --root "<StudioRoot>" run prompt-to-image-to-video --prompt "A yellow paper boat on rainwater, cinematic lighting" --video-prompt "The boat drifts slowly as ripples spread. Gentle camera push-in." --negative-prompt "flicker, text, hard cut" --project "paper-boat" --seed 20261122
 
-生图阶段会保存所有候选图片。不传 --image-index 时，CLI 会列出候选图并等待你交互选择；自动化运行时可指定 --image-index 0 或其他序号。选中的图像会通过 ComfyUI upload API 送入图生视频工作流。
+命令会列出候选图的路径并等待你输入序号。候选数量由生图工作流决定。自动化运行时可用 `--image-index 0` 之类的参数指定序号。Studio 通过 ComfyUI 的上传接口把选中的图送入图生视频工作流。
 
 ### B. 已有图片 + 提示词 → 视频
 
-    python -m studio.cli --root "E:\AI-Video-Studio" run image-to-video --image "E:\AI-Video-Studio\04_ASSETS\my-character.png" --prompt "The character smiles gently and waves at the camera; slow camera push-in" --project "my-character" --seed 20261122
+    python run_studio.py --root "<StudioRoot>" run image-to-video --image "<StudioRoot>\04_ASSETS\my-character.png" --prompt "The character smiles gently and waves at the camera. Slow camera push-in." --project "my-character" --seed 20261122
 
 ### 输出记录
 
-每次运行创建唯一 run 目录，保存候选图、视频、输入图片副本和 metadata/run.json。记录 prompt、seed、workflow ID、ComfyUI prompt ID、阶段耗时和输出路径。不会覆盖已有成片。
+每次运行使用独立目录，保存候选图、视频、输入副本、提交给 ComfyUI 的 API 图和 `metadata/run.json`。记录包括所选序号、提示词、seed、模型版本、ComfyUI prompt ID、阶段耗时、输出路径和 SHA-256。配置媒体检查后，记录还包含 FFprobe 的流信息和完整解码结果。
 
 ## 图像模型策略
 
 不要把一个模型硬编码成唯一选择。ComfyUI 官方工作流库目前涵盖 SDXL、Flux、Qwen Image、Z-Image、Hunyuan Image 等多种图像家族。由本机 Codex 根据部署当天的官方模板、RTX 5090 实测显存、Windows/Blackwell 兼容性、许可证与下载量选择一个主图像模型。第一阶段只部署一条图像路线，避免重复下载多个大模型。参考图重绘需要时再单独启用 reference_to_image。
 
 官方模型与工作流目录：
-- https://comfy.org/workflows/tag/text-to-image/
+- https://comfy.org/hub/workflows/?capability=Text%20to%20Image
 - https://github.com/Comfy-Org/ComfyUI
 
 ## 交付边界

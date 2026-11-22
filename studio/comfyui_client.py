@@ -24,11 +24,34 @@ class Artifact:
     node_id: str
 
 
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        return None
+
+
 class ComfyUIClient:
     """Small standard-library client for ComfyUI's local HTTP API."""
 
     def __init__(self, base_url: str = "http://127.0.0.1:8188", timeout: int = 30):
-        self.base_url = base_url.rstrip("/")
+        address_error = "ComfyUI base_url must use http://127.0.0.1 with an optional port or base path."
+        if not isinstance(base_url, str):
+            raise ComfyUIError(address_error)
+        try:
+            endpoint = urllib.parse.urlsplit(base_url)
+            port = endpoint.port
+        except ValueError as exc:
+            raise ComfyUIError(address_error) from exc
+        if (
+            endpoint.scheme != "http"
+            or endpoint.hostname != "127.0.0.1"
+            or endpoint.username is not None
+            or endpoint.query
+            or endpoint.fragment
+            or port == 0
+        ):
+            raise ComfyUIError(address_error)
+        self.base_url = endpoint.geturl().rstrip("/")
+        self._opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), _NoRedirect())
         self.timeout = timeout
         self.client_id = str(uuid.uuid4())
 
@@ -46,7 +69,7 @@ class ComfyUIClient:
             method="POST" if data is not None else "GET",
         )
         try:
-            with urllib.request.urlopen(request, timeout=timeout or self.timeout) as response:
+            with self._opener.open(request, timeout=timeout or self.timeout) as response:
                 return response.read()
         except urllib.error.HTTPError as exc:
             detail = exc.read().decode("utf-8", errors="replace")
@@ -140,12 +163,12 @@ class ComfyUIClient:
                 status = entry.get("status") or {}
                 last_status = status
                 status_str = str(status.get("status_str", "")).lower()
-                if status.get("completed") is True or status_str in ("success", "completed"):
-                    return entry
                 if status_str in ("error", "failed"):
                     raise ComfyUIError(
                         f"Workflow {prompt_id} failed. Status: {json.dumps(status, ensure_ascii=False)[:5000]}"
                     )
+                if status.get("completed") is True or status_str in ("success", "completed"):
+                    return entry
                 if entry.get("outputs") and not status_str:
                     return entry
             time.sleep(poll_interval)
@@ -173,12 +196,18 @@ class ComfyUIClient:
                 for value in values:
                     if not isinstance(value, dict) or not value.get("filename"):
                         continue
+                    filename = str(value["filename"])
+                    metadata = value.get("metadata")
+                    media_type = mimetypes.guess_type(filename)[0] or ""
+                    is_video = (
+                        isinstance(metadata, dict) and metadata.get("kind") == "video"
+                    ) or media_type.startswith("video/")
                     artifacts.append(
                         Artifact(
-                            filename=str(value["filename"]),
+                            filename=filename,
                             subfolder=str(value.get("subfolder", "")),
                             folder_type=str(value.get("type", "output")),
-                            kind=kind,
+                            kind="video" if kind == "image" and is_video else kind,
                             node_id=str(node_id),
                         )
                     )
