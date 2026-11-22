@@ -27,3 +27,13 @@ Last repository update: 2026-11-22.
 The GitHub files were written and read back through the connected GitHub integration. PowerShell scripts have been statically reviewed but have **not** been executed on the user's Windows 11 / RTX 5090 machine in this session. No model weights have been downloaded, no local driver or runtime has been changed, and no video generation has been run.
 
 The next required action on the workstation is to run `PREFLIGHT.bat`, inspect the generated report, and then execute the safe workspace initialization after confirming the Samsung SSD volume.
+
+## V3 core installer milestone (committed; target-machine untested)
+
+Additional committed files:
+- `INSTALL-V3.bat` and `bootstrap/Invoke-V3.ps1` orchestrate the interactive core setup.
+- `bootstrap/Install-Core.ps1` resolves the latest official NVIDIA Portable release asset, downloads it, checks the archive with 7-Zip, extracts to staging, validates the runtime layout, configures external model paths, writes a launcher and local runtime manifest.
+- `bootstrap/Test-ComfyUI.ps1` probes the local API and optional PyTorch CUDA environment.
+- `docs/V3_INSTALLER.md` documents scope and limitations.
+
+The V3 installer is a real first-stage core installer, not yet the promised complete one-click model/workflow installer. It still requires 7-Zip (winget installation is offered only after explicit confirmation). It does not download Wan/LTX weights or install third-party custom nodes.
