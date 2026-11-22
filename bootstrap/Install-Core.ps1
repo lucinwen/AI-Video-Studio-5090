@@ -41,22 +41,39 @@ if (-not $sevenZip) {
   throw "7-Zip command not found. Install 7-Zip from https://www.7-zip.org/ (or approved winget package), reopen PowerShell, then rerun. No software was installed by this script."
 }
 $archive = Join-Path $downloadsRoot "ComfyUI_windows_portable_nvidia.7z"
+$archiveMetaPath = "$archive.metadata.json"
 if ($SkipArchiveDownload -and -not (Test-Path $archive)) { throw "-SkipArchiveDownload was specified but archive is missing: $archive" }
-if (-not $SkipArchiveDownload) {
+if (Test-Path $archive) {
+  $existingTest = & $sevenZip.Source t $archive 2>&1
+  if ($LASTEXITCODE -ne 0) { throw "Existing archive failed 7-Zip integrity test. It is preserved at $archive; inspect or manually rename it before retrying. Output: $existingTest" }
+  if (Test-Path $archiveMetaPath) {
+    $archiveMeta = Get-Content -LiteralPath $archiveMetaPath -Raw | ConvertFrom-Json
+    if ($releaseTag -and $archiveMeta.release_tag -and $archiveMeta.release_tag -ne $releaseTag) {
+      throw "Existing archive is tagged $($archiveMeta.release_tag), but current resolved release is $releaseTag. Archive is preserved; rename it if you intentionally want another version."
+    }
+  } else {
+    $reuse = Read-Host "A valid archive exists without release metadata. Type REUSE to use it as an unverified existing archive"
+    if ($reuse -cne "REUSE") { throw "Unverified archive reuse declined. Archive preserved." }
+    $releaseTag = "unverified-existing-archive"
+  }
+} elseif (-not $SkipArchiveDownload) {
   $volumeRoot = [System.IO.Path]::GetPathRoot($RootPath)
   $volume = Get-Volume -DriveLetter $volumeRoot.Substring(0,1)
   if ($volume.SizeRemaining -lt 20GB) { throw "Less than 20 GB free on target volume; refusing core installation." }
-  if (Test-Path $archive) {
-    Write-Host "Reusing existing archive: $archive"
-  } else {
-    if (-not $PSCmdlet.ShouldProcess($archive,"Download official ComfyUI NVIDIA Portable release archive")) { return }
-    $curl = Get-Command curl.exe -ErrorAction SilentlyContinue
-    if (-not $curl) { throw "curl.exe is required (normally included with Windows 11)." }
-    & $curl.Source -L --fail --retry 5 --retry-delay 3 --output $archive $ComfyUiReleaseUrl
-    if ($LASTEXITCODE -ne 0 -or -not (Test-Path $archive) -or (Get-Item $archive).Length -lt 100MB) {
-      throw "ComfyUI archive download failed or is unexpectedly small. Check network and rerun; partial archive retained for inspection."
-    }
+  if (-not $PSCmdlet.ShouldProcess($archive,"Download official ComfyUI NVIDIA Portable release archive")) { return }
+  $curl = Get-Command curl.exe -ErrorAction SilentlyContinue
+  if (-not $curl) { throw "curl.exe is required (normally included with Windows 11)." }
+  $partialArchive = "$archive.partial"
+  & $curl.Source -L --fail --retry 5 --retry-delay 3 -C - --output $partialArchive $ComfyUiReleaseUrl
+  if ($LASTEXITCODE -ne 0 -or -not (Test-Path $partialArchive) -or (Get-Item $partialArchive).Length -lt 100MB) {
+    throw "ComfyUI archive download failed or is unexpectedly small. Partial archive retained for resume: $partialArchive"
   }
+  $partialTest = & $sevenZip.Source t $partialArchive 2>&1
+  if ($LASTEXITCODE -ne 0) { throw "Downloaded archive failed integrity test. Partial retained at $partialArchive. Output: $partialTest" }
+  Move-Item -LiteralPath $partialArchive -Destination $archive
+  $archiveHash = (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash
+  [ordered]@{ release_tag=$releaseTag; release_api_url=$releaseApiUrl; source_url=$ComfyUiReleaseUrl; sha256=$archiveHash; size_bytes=(Get-Item -LiteralPath $archive).Length; downloaded_at=(Get-Date).ToString("o") } |
+    ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $archiveMetaPath -Encoding UTF8
 }
 $test = & $sevenZip.Source t $archive 2>&1
 if ($LASTEXITCODE -ne 0) { throw "7-Zip archive integrity test failed. Archive retained at $archive. Output: $test" }
