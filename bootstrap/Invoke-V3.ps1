@@ -52,9 +52,6 @@ if ($confirm -cne "CREATE") { throw "User did not confirm workspace creation. No
 
 # Phase 3: safe workspace initialization, WhatIf preview first.
 $init = Join-Path $PSScriptRoot "Initialize-Workspace.ps1"
-& $init -RootPath $root -WhatIf
-$confirm2 = Read-Host "Review the WhatIf paths above. Type CONTINUE to create folders"
-if ($confirm2 -cne "CONTINUE") { throw "User cancelled after preview." }
 $confirmExisting = $false
 if (Test-Path $root) {
   $items = @(Get-ChildItem -LiteralPath $root -Force)
@@ -65,13 +62,16 @@ if (Test-Path $root) {
     $confirmExisting = $true
   }
 }
+if ($confirmExisting) { & $init -RootPath $root -ConfirmExisting -WhatIf } else { & $init -RootPath $root -WhatIf }
+$confirm2 = Read-Host "Review the WhatIf paths above. Type CONTINUE to create folders"
+if ($confirm2 -cne "CONTINUE") { throw "User cancelled after preview." }
 if ($confirmExisting) { & $init -RootPath $root -ConfirmExisting } else { & $init -RootPath $root }
 
 # Phase 4: ensure 7-Zip exists. Installing a system package requires explicit confirmation.
 $sevenZip = Get-Command 7z -ErrorAction SilentlyContinue
 if (-not $sevenZip) { $sevenZip = Get-Command 7zz -ErrorAction SilentlyContinue }
 if (-not $sevenZip) {
-  $known = @("$env:ProgramFiles\7-Zip\7z.exe","$env:ProgramFiles(x86)\7-Zip\7z.exe")
+  $known = @("$env:ProgramFiles\7-Zip\7z.exe","${env:ProgramFiles(x86)}\7-Zip\7z.exe")
   $sevenZipPath = $known | Where-Object { Test-Path $_ } | Select-Object -First 1
   if ($sevenZipPath) {
     $env:PATH = "$(Split-Path $sevenZipPath);$env:PATH"
