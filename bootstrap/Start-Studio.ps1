@@ -6,7 +6,7 @@ param(
 $ErrorActionPreference = "Stop"
 $main = Join-Path $ComfyRoot "main.py"
 if (-not (Test-Path $main)) { throw "ComfyUI main.py not found at $main" }
-$python = Join-Path $ComfyRoot "python_embeded\python.exe"
+$python = Join-Path $ComfyRoot "..\python_embeded\python.exe"
 if (-not (Test-Path $python)) {
   $python = Join-Path $ComfyRoot ".venv\Scripts\python.exe"
 }
