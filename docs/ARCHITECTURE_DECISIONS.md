@@ -44,7 +44,7 @@ Status: Accepted.
 
 Do not build a complex frontend or multi-agent director until the ComfyUI API can complete reproducible image and video jobs. Deliver a CLI/API and workflow registry first.
 
-## ADR-006 — Portable as V3 scripted production runtime
+## ADR-007 — Portable as V3 scripted production runtime
 
 Status: Accepted for the V3 first-run installer, subject to target validation.
 
