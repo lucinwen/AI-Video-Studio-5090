@@ -82,7 +82,7 @@ if (-not $sevenZip) {
     if ($install7z -cne "INSTALL") { throw "7-Zip installation declined. Workspace is ready; install 7-Zip and rerun." }
     & $winget.Source install --id 7zip.7zip --exact --accept-package-agreements --accept-source-agreements
     if ($LASTEXITCODE -ne 0) { throw "winget 7-Zip install failed. Install 7-Zip manually and rerun." }
-    $known = @("$env:ProgramFiles\7-Zip\7z.exe","$env:ProgramFiles(x86)\7-Zip\7z.exe")
+    $known = @("$env:ProgramFiles\7-Zip\7z.exe","${env:ProgramFiles(x86)}\7-Zip\7z.exe")
     $sevenZipPath = $known | Where-Object { Test-Path $_ } | Select-Object -First 1
     if ($sevenZipPath) { $env:PATH = "$(Split-Path $sevenZipPath);$env:PATH" }
   }
