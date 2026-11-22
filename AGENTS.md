@@ -170,3 +170,14 @@ Do not commit these local reports, model paths, serial numbers, usernames, or ge
 - Run `Invoke-Doctor.ps1` after workspace initialization.
 - After ComfyUI is installed and started, run `Test-ComfyUI.ps1` against localhost and the selected isolated Python executable.
 - The scripts are starter automation and must be reviewed and tested on the target Windows machine. Do not claim PowerShell runtime validation from static inspection alone.
+
+## 14. V3 executable installer
+
+For a fresh Windows 11 target, the supported first-run entry point is `INSTALL-V3.bat`. It invokes `bootstrap/Invoke-V3.ps1`, which performs preflight, Samsung disk-to-volume mapping, explicit workspace confirmation, a WhatIf preview, and the official NVIDIA Portable core install.
+
+- Do not bypass its CREATE / CONTINUE / PRESERVE prompts.
+- If 7-Zip is missing, install only after the explicit INSTALL confirmation.
+- The core installer resolves the current release metadata, records the tag, URL, archive SHA-256, and size, validates the 7z archive, checks the expected folder layout, and refuses to overwrite a runtime.
+- The generated launch script routes Hugging Face, Torch, pip, and temp caches to the workspace and binds ComfyUI to 127.0.0.1.
+- If release metadata or archive layout changes, stop and update the installer based on official upstream documentation; do not guess filenames or paths.
+- After installation, start ComfyUI and run Test-ComfyUI.ps1. No video model is ready until its workflow passes acceptance tests.
