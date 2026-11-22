@@ -42,3 +42,7 @@ This is **not yet** a fully unattended all-model installer. Model weights and th
 - PowerShell scripts must be executed on the target Windows workstation. Static repository inspection is not runtime validation.
 - Desktop-managed ComfyUI is not controlled by this Portable launcher. This release intentionally selects one standalone Portable runtime for agent/script control.
 - 7-Zip must be installed separately from its official source.
+
+## Model pack downloader
+
+After the ComfyUI core has passed its API/CUDA checks, the local agent can prepare a model pack JSON and call `bootstrap/Download-ModelPack.ps1`. The utility supports resumable downloads, size and SHA-256 validation, safe model-root paths, and no-overwrite behavior. It deliberately refuses gated repositories and requires a human-reviewed license flag plus a typed DOWNLOAD confirmation. See [MODEL_DOWNLOAD_ENGINE.md](MODEL_DOWNLOAD_ENGINE.md).
