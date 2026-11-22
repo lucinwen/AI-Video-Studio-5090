@@ -16,19 +16,32 @@ body{background:radial-gradient(ellipse at 50% 19%,#29213e 0,transparent 48%),va
 .submit-actions,.results-header{display:flex;align-items:center;gap:10px}.results-header{justify-content:space-between}.results-header h2{margin:6px 0 0;font-size:1.35rem}.results{max-width:760px;margin:38px auto 0}.results-header button{width:auto;margin:0;font-size:.84rem}
 button:disabled{opacity:.52;cursor:not-allowed}.secondary{background:transparent;color:var(--ink);border-color:#4b4e67;font-weight:500}
 .job{margin:12px 0 0;padding:16px 18px;border:1px solid var(--line);background:var(--surface);border-radius:14px}.job header{padding:0;border:0;align-items:baseline}.job-title,.job-error{overflow-wrap:anywhere}.job-title{margin:0;color:var(--ink);font-size:1rem}.job-badge{font-size:.78rem;color:var(--accent);white-space:nowrap}.job-error{margin:8px 0 0}.job a{display:inline-block;margin-top:8px}.empty-result{padding:20px 12px;text-align:center;border:1px dashed var(--line);border-radius:14px}
+
+:root{--bg:#111017;--surface:#181821;--line:#363447;--accent:#ddd2ff}
+main{max-width:1180px}.sitebar{padding:2px 0 16px;border-bottom:1px solid #2c293c}
+.brand,.connection{display:flex;align-items:center;gap:10px}.brand-mark{width:32px;height:32px;display:grid;place-items:center;background:#28213d;border:1px solid #504561;border-radius:10px;color:#e9deff;font-size:.85rem}
+.connection{font-size:.8rem;color:#cbc3df}.connection::before{content:"";border-radius:50%;width:7px;height:7px;background:#b49de6}.connection[data-state="ready"]::before{background:#93e3bb}.connection[data-state="offline"]::before{background:#ffc592}
+.hero{padding:72px 0 26px}.hero h1{letter-spacing:-.055em;text-wrap:balance}.hero p{max-width:595px;margin:14px auto 0;text-wrap:pretty}
+.composer{transition:border-color .16s,box-shadow .16s}.composer:focus-within,.composer[data-drag="yes"]{border-color:#9f84cf;box-shadow:0 12px 54px #0806178f,0 0 0 2px #b9a0ff33}.composer textarea:focus-visible{outline:none}.composer textarea::placeholder{color:#a6a0b7}.field-hints{display:flex;justify-content:space-between;gap:8px;padding:0 10px 10px}.field-hints small{margin:0;font-size:.76rem}
+.prompt-starters{max-width:760px;margin:12px auto 0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}.prompt-starters button{width:auto;margin:0;padding:6px 12px;font-size:.8rem;border-radius:999px}.prompt-starters span{font-size:.8rem;color:var(--muted)}
+.results-header .connection{max-width:100%}.job{background:linear-gradient(125deg,#1d1a2a,#181821 60%)}.job header{border-bottom:1px solid #313041;padding-bottom:10px}.job-body{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px}.job-body button,.job-body a{width:auto;margin:0;padding:6px 10px;border-radius:8px;font-size:.82rem}.job-body a{border:1px solid var(--line)}.job-badge{padding:3px 9px;border-radius:999px;background:#2d2640}.job video{display:block;max-height:420px;background:#101017}.job-note{font-size:.85rem;margin:8px 0 0}.ref small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:min(56vw,380px)}.empty-result[hidden]{display:none}
+@media(max-width:600px){main{padding:20px 13px}.hero{padding:48px 0 22px}.job header{flex-wrap:wrap}.sitebar{gap:6px}.connection{font-size:.73rem}.field-hints{flex-wrap:wrap}}
+@media(prefers-reduced-motion:reduce){.composer{transition:none}}
 </style></head>
 <body><main>
-<div class="sitebar"><span>AI Video Studio</span><small>本地创作  /  PRIVATE STUDIO</small></div>
+<div class="sitebar"><span class="brand"><span class="brand-mark" aria-hidden="true">▶</span>AI Video Studio</span><span class="connection" id="connection" data-state="checking">连接中</span></div>
 <section class="hero" aria-labelledby="hero-title">
  <div class="eyebrow">VIDEO STUDIO</div><h1 id="hero-title">今天想拍什么？</h1>
- <p>描述你脑海里的画面，或用参考图锁定第一帧。视频在这台电脑上生成。</p>
+ <p>写下你想要的画面和动作。有参考图？把它放进来，让画面动起来。</p>
 </section>
-<form class="composer" id="quick-form">
+<form class="composer" id="quick-form" aria-describedby="quick-status">
  <label class="sr" for="idea">描述你想拍的画面</label><textarea id="idea" maxlength="2000" placeholder="例如：深夜的钥匙店里，暖黄灯光照着一把旧钥匙。镜头缓缓推近，门外飘着细雨。"></textarea>
+ <div class="field-hints"><small>可粘贴或拖入参考图 · 最大 5 MB <span class="key-hint">· Ctrl / ⌘ + Enter 生成</span></small><small id="idea-count" aria-hidden="true">0 / 2,000</small></div>
  <div class="ref" id="ref-row" hidden><img id="ref-preview" alt="参考图预览"><small id="ref-name"></small><button id="remove-ref" type="button">移除</button></div>
- <div class="actions"><input type="file" id="reference" accept="image/png,image/jpeg,image/webp"><label for="reference">＋ 添加参考图</label><div class="submit-actions"><button type="button" id="save-draft" class="secondary">存草稿</button><button id="generate" type="submit" disabled>生成视频</button></div></div>
+ <div class="actions"><input type="file" id="reference" accept="image/png,image/jpeg,image/webp"><label for="reference">＋ 添加参考图</label><div class="submit-actions"><button type="button" id="save-draft" class="secondary">存草稿</button><button id="generate" type="submit" aria-keyshortcuts="Control+Enter Meta+Enter" disabled>生成视频</button></div></div>
  <p class="state" id="quick-status" role="status">正在检查本地生成服务…</p>
 </form>
+<div class="prompt-starters" aria-label="提示词示例"><span>试试这些描述</span><button type="button" id="example-film" class="secondary">电影运镜</button><button type="button" id="example-product" class="secondary">产品镜头</button><button type="button" id="example-light" class="secondary">光影变化</button></div>
 <section class="results" aria-labelledby="results-title">
 <div class="results-header"><div><div class="eyebrow">YOUR WORK</div><h2 id="results-title">生成记录</h2></div><button id="refresh-engine" class="secondary" type="button">检查连接</button></div>
 <div id="results-list"></div>
@@ -64,12 +77,49 @@ let jobs=[];
 try{const data=JSON.parse(localStorage.getItem(recentKey));if(Array.isArray(data))jobs=data.filter(j=>j&&validId(j.id)&&typeof j.prompt==='string'&&validState(j.state)).slice(0,12);}catch{}
 const persistJobs=()=>{try{localStorage.setItem(recentKey,JSON.stringify(jobs));}catch{}};
 function clearRef(){if(refUrl)URL.revokeObjectURL(refUrl);refUrl=null;reference=null;by('reference').value='';by('ref-preview').removeAttribute('src');by('ref-row').hidden=true;}
-by('reference').onchange=e=>{
- const file=e.target.files[0];if(!file)return;clearRef();
- if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>5*1024*1024){quickStatus.textContent='请选择不超过 5 MB 的 PNG、JPEG 或 WebP 图片。';return;}
- reference=file;refUrl=URL.createObjectURL(file);by('ref-preview').src=refUrl;by('ref-name').textContent=file.name;by('ref-row').hidden=false;quickStatus.textContent=ready&&!capability.image?'参考图已预览；当前仅配置了文生视频。移除图片后可以生成。':'参考图已添加。写下你希望画面如何运动；图片只会发送给本机。';
-};
+function useReference(file){
+ if(!file)return false;
+ if(!['image/png','image/jpeg','image/webp'].includes(file.type)||!file.size||file.size>5*1024*1024){quickStatus.textContent='请选择不超过 5 MB 的 PNG、JPEG 或 WebP 图片。';return false;}
+ clearRef();
+ reference=file;refUrl=URL.createObjectURL(file);by('ref-preview').src=refUrl;by('ref-name').textContent=file.name||'粘贴的参考图';by('ref-row').hidden=false;quickStatus.textContent=ready&&!capability.image?'参考图已预览；当前仅配置了文生视频。移除图片后可以生成。':'参考图已添加。写下你希望画面如何运动；图片只会发送给本机。';
+ return true;
+}
+by('reference').onchange=e=>{const file=e.target.files[0];if(file&&!useReference(file))e.target.value='';};
 by('remove-ref').onclick=()=>{clearRef();if(ready)showReady();};
+const composer=by('quick-form'), ideaField=by('idea');
+const countIdea=()=>by('idea-count').textContent=ideaField.value.length.toLocaleString('en-US')+' / 2,000';
+function putIdea(prompt){ideaField.value=prompt.slice(0,2000);countIdea();ideaField.focus();}
+ideaField.oninput=countIdea;
+ideaField.onkeydown=e=>{
+ if(e.key!=='Enter'||!(e.ctrlKey||e.metaKey)||e.shiftKey||e.altKey||e.isComposing||e.repeat)return;
+ if(by('generate').disabled)return;
+ e.preventDefault();composer.requestSubmit(by('generate'));
+};
+composer.onpaste=e=>{
+ const image=Array.from(e.clipboardData?.items||[]).find(item=>item.kind==='file'&&item.type.startsWith('image/'));
+ const file=image?.getAsFile();
+ if(file&&!e.clipboardData?.getData('text/plain')){e.preventDefault();useReference(file);}
+};
+const isFileDrag=e=>Array.from(e.dataTransfer?.types||[]).includes('Files');
+let dragDepth=0;
+composer.ondragenter=e=>{if(!isFileDrag(e))return;e.preventDefault();dragDepth++;composer.dataset.drag='yes';};
+composer.ondragover=e=>{if(!isFileDrag(e))return;e.preventDefault();e.dataTransfer.dropEffect='copy';};
+composer.ondragleave=()=>{dragDepth=Math.max(0,dragDepth-1);if(!dragDepth)delete composer.dataset.drag;};
+composer.ondrop=e=>{
+ if(!e.dataTransfer?.files?.length)return;
+ e.preventDefault();dragDepth=0;delete composer.dataset.drag;
+ if(e.dataTransfer.files.length!==1){quickStatus.textContent='每次只能添加一张参考图。';return;}useReference(e.dataTransfer.files[0]);
+};
+const examples={
+ 'example-film':'暖色灯光照着柜台上的旧钥匙，门外有细雨。镜头低机位缓慢推近，焦点从背景落到钥匙，保留自然的景深和细腻的反光。',
+ 'example-product':'一只磨砂玻璃香水瓶置于深色石台，镜头从侧面缓缓绕到正面。瓶身保持静止，柔光扫过边缘，只表现玻璃的质感。',
+ 'example-light':'晨雾从山谷缓慢散开，阳光逐渐照亮右侧的树梢。保持机位不变，雾和光线自然变化，不切镜头。'
+};
+for(const [id,prompt] of Object.entries(examples))by(id).onclick=()=>{
+ if(ideaField.value.trim()&&ideaField.value!==prompt){quickStatus.textContent='已保留当前描述。清空后再点示例，或直接编辑。';ideaField.focus();return;}
+ putIdea(prompt);
+ quickStatus.textContent='示例已填入，先改成你想拍的画面，再点击生成。';
+};
 by('save-draft').onclick=()=>{
  const idea=by('idea').value.trim();
  if(!idea){quickStatus.textContent='先写下你想拍的画面。';return;}
@@ -103,7 +153,8 @@ async function checkEngine(){
   const imageFirst=state.imageRequired===true||['i2v','image-to-video'].includes(state.mode);
   capability=state.capabilities?{text:state.capabilities.text===true,image:state.capabilities.image===true}:{text:!imageFirst,image:true};
   if(ready)showReady();else quickStatus.textContent=state.reason||'生成暂不可用。请启动 ComfyUI 并检查工作流。';
- }catch(error){ready=false;quickStatus.textContent=location.protocol==='file:'?error.message:'找不到本地生成服务。请先启动 Studio 和 ComfyUI，再检查连接。';}
+  by('connection').dataset.state=ready?'ready':'offline';by('connection').textContent=ready?'本地引擎已连接':state.mode==='setup'?'等待配置工作流':'本地引擎未连接';
+ }catch(error){ready=false;by('connection').dataset.state='offline';by('connection').textContent='本地引擎未连接';quickStatus.textContent=location.protocol==='file:'?error.message:'找不到本地生成服务。请先启动 Studio 和 ComfyUI，再检查连接。';}
  finally{by('refresh-engine').disabled=false;navState();}
 }
 function imageData(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(Error('无法读取参考图片，请重新选择。'));reader.readAsDataURL(file);});}
@@ -118,7 +169,7 @@ by('quick-form').onsubmit=async e=>{
   const payload={prompt};if(file)payload.image=await imageData(file);
   const created=await api('/api/jobs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
   if(!validId(created.id))throw Error('本地服务没有返回有效的生成任务编号。');
-  const job={id:created.id,prompt,state:'queued'};jobs=[job,...jobs.filter(j=>j.id!==job.id)].slice(0,12);persistJobs();renderJobs();
+  const job={id:created.id,prompt,state:'queued',hasReference:!!file};jobs=[job,...jobs.filter(j=>j.id!==job.id)].slice(0,12);persistJobs();renderJobs();
   quickStatus.textContent='已提交。可以在生成记录中查看进度。';
   pollJobs();
  }catch(error){quickStatus.textContent=error.name==='TimeoutError'?'提交等待超时，任务可能已启动。先检查本地队列，不要连续重试。':(error.message||'提交失败，请检查本地服务。');}
@@ -143,10 +194,23 @@ function renderJobs(){
   const header=document.createElement('header'),title=document.createElement('h3'),badge=document.createElement('span');
   title.className='job-title';title.textContent=job.prompt;badge.className='job-badge';badge.textContent=badges[job.state];header.append(title,badge);el.replaceChildren(header);
   if(job.state==='failed'||job.error){const desc=document.createElement('p');desc.className='job-error';desc.textContent=job.error||'本地生成失败。请检查 ComfyUI 并重新提交。';el.append(desc);}
+  const actions=document.createElement('div');actions.className='job-body';
   if(job.state==='succeeded'){const url=safeVideo(job.video);if(url){
    const video=document.createElement('video');video.controls=true;video.playsInline=true;video.preload='metadata';video.src=url;
-   const link=document.createElement('a');link.href=url;link.download='studio-'+job.id+'.mp4';link.textContent='下载 MP4';el.append(video,link);
+   const link=document.createElement('a');link.href=url;link.download='studio-'+job.id+'.mp4';link.textContent='下载 MP4';el.append(video);actions.append(link);
   }else{const desc=document.createElement('p');desc.textContent='生成完成，但本地服务没有返回可播放的视频。';el.append(desc);}}
+  const reuse=document.createElement('button');reuse.type='button';reuse.className='secondary';reuse.textContent='沿用描述';
+  reuse.onclick=()=>{
+   const apply=()=>{putIdea(job.prompt);
+    quickStatus.textContent=job.hasReference?(reference?'已填入描述。当前是你后来添加的参考图，请核对。':'已填入描述。历史参考图不会恢复，请重新添加。'):
+    reference?'已填入描述。当前仍有一张参考图，如不需要请移除。':'已填入描述。可以编辑后再生成。';
+   };
+   if(ideaField.value.trim()&&ideaField.value!==job.prompt){if(!window.confirm('用这一条历史描述替换当前编辑内容？'))return;}
+   apply();
+  };
+  actions.append(reuse);
+  if(job.hasReference){const note=document.createElement('span');note.className='job-note';note.textContent='图生视频 · 原参考图不随记录保存';actions.append(note);}
+  el.append(actions);
  });
 }
 let polling=false;
@@ -176,5 +240,5 @@ async function pollJobs(){
  }finally{polling=false;}
 }
 by('refresh-engine').onclick=()=>{checkEngine();pollJobs();};
-render();renderJobs();checkEngine();pollJobs();setInterval(pollJobs,2200);
+render();countIdea();renderJobs();checkEngine();pollJobs();setInterval(pollJobs,2200);
 </script></body></html>
