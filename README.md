@@ -117,3 +117,8 @@ The V3 entry point is [INSTALL-V3.bat](INSTALL-V3.bat). It:
 7. configures shared model paths and a local-only launch script.
 
 This V3 milestone installs the **ComfyUI core only**. It does not bulk-download video models, install unreviewed custom nodes, or claim video generation is ready. Continue with [docs/V3_INSTALLER.md](docs/V3_INSTALLER.md), [docs/BLACKWELL_PROFILE.md](docs/BLACKWELL_PROFILE.md), and [docs/ACCEPTANCE.md](docs/ACCEPTANCE.md).
+
+- [bootstrap/Install-Core.ps1](bootstrap/Install-Core.ps1) — resolves and installs the official ComfyUI NVIDIA Portable release.
+- [bootstrap/Invoke-V3.ps1](bootstrap/Invoke-V3.ps1) / [INSTALL-V3.bat](INSTALL-V3.bat) — interactive V3 core bootstrap.
+- [bootstrap/Download-ModelPack.ps1](bootstrap/Download-ModelPack.ps1) — resumable, manifest-driven HTTPS model artifact downloader with license, path, size, and hash gates.
+- [config/model-pack.example.json](config/model-pack.example.json) — model pack manifest schema.
