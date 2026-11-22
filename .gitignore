@@ -1,0 +1,62 @@
+# Local runtime, model weights, media, caches, and machine-specific reports
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.env
+.env.*
+!.env.example
+
+# ComfyUI runtime data
+ComfyUI/output/
+ComfyUI/input/
+ComfyUI/temp/
+ComfyUI/user/
+ComfyUI/models/
+custom_nodes/**/.venv/
+
+# AI model weights and downloads
+*.safetensors
+*.ckpt
+*.pt
+*.pth
+*.bin
+*.gguf
+*.onnx
+*.engine
+*.plan
+*.model
+*.part
+*.aria2
+models/
+downloads/
+weights/
+
+# Media and generated assets
+*.mp4
+*.mov
+*.mkv
+*.webm
+*.wav
+*.mp3
+*.flac
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.exr
+*.blend
+*.fbx
+*.obj
+
+# Local workstation reports and paths
+local-config/
+machine-inventory/
+deployment-report.local.*
+deployment-manifest.local.*
+software-inventory.local.*
+logs/
+cache/
+temp/
+outputs/
+projects-local/
