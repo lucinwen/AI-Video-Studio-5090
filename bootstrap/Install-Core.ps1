@@ -1,7 +1,7 @@
 [CmdletBinding(SupportsShouldProcess=$true)]
 param(
   [Parameter(Mandatory=$true)][string]$RootPath,
-  [string]$ComfyUiReleaseUrl = "https://github.com/comfyanonymous/ComfyUI/releases/latest/download/ComfyUI_windows_portable_nvidia.7z",
+  [string]$ComfyUiReleaseUrl = "",
   [switch]$SkipArchiveDownload
 )
 $ErrorActionPreference = "Stop"
@@ -15,6 +15,18 @@ $modelsRoot = Join-Path $RootPath "02_MODELS"
 $logsRoot = Join-Path $RootPath "09_LOGS"
 $downloadsRoot = Join-Path $RootPath "00_CONTROL\downloads"
 New-Item -ItemType Directory -Force -Path $downloadsRoot,$logsRoot | Out-Null
+$releaseTag = $null
+$releaseApiUrl = "https://api.github.com/repos/comfyanonymous/ComfyUI/releases/latest"
+if (-not $ComfyUiReleaseUrl) {
+  Write-Host "Resolving current official ComfyUI release metadata..."
+  $release = Invoke-RestMethod -Uri $releaseApiUrl -Headers @{ "User-Agent"="AI-Video-Studio-5090" } -TimeoutSec 30
+  $asset = $release.assets | Where-Object { $_.name -eq "ComfyUI_windows_portable_nvidia.7z" } | Select-Object -First 1
+  if (-not $asset) { throw "Latest official release $($release.tag_name) has no expected NVIDIA Portable asset. Inspect upstream release; do not guess an alternative asset." }
+  $ComfyUiReleaseUrl = $asset.browser_download_url
+  $releaseTag = $release.tag_name
+} else {
+  $releaseTag = "custom-url-unresolved"
+}
 
 if (Test-Path (Join-Path $runtimeRoot "ComfyUI\main.py")) {
   throw "ComfyUI already appears installed at $runtimeRoot. Use the update/repair procedure; this installer never overwrites an existing runtime."
@@ -29,6 +41,7 @@ if (-not $sevenZip) {
   throw "7-Zip command not found. Install 7-Zip from https://www.7-zip.org/ (or approved winget package), reopen PowerShell, then rerun. No software was installed by this script."
 }
 $archive = Join-Path $downloadsRoot "ComfyUI_windows_portable_nvidia.7z"
+if ($SkipArchiveDownload -and -not (Test-Path $archive)) { throw "-SkipArchiveDownload was specified but archive is missing: $archive" }
 if (-not $SkipArchiveDownload) {
   $volumeRoot = [System.IO.Path]::GetPathRoot($RootPath)
   $volume = Get-Volume -DriveLetter $volumeRoot.Substring(0,1)
@@ -119,6 +132,8 @@ $torchInfo = & $embeddedPython -c "import torch; print(torch.__version__); print
 $report = [ordered]@{
   installed_at=(Get-Date).ToString("o")
   distribution="ComfyUI Windows NVIDIA Portable"
+  release_tag=$releaseTag
+  release_api_url=$releaseApiUrl
   source_url=$ComfyUiReleaseUrl
   archive_path=$archive
   archive_sha256=(Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash
