@@ -43,3 +43,13 @@ Wan 2.2 workflows can require multiple diffusion models plus text encoder and VA
 Status: Accepted.
 
 Do not build a complex frontend or multi-agent director until the ComfyUI API can complete reproducible image and video jobs. Deliver a CLI/API and workflow registry first.
+
+## ADR-006 — Portable as V3 scripted production runtime
+
+Status: Accepted for the V3 first-run installer, subject to target validation.
+
+ComfyUI officially recommends Desktop for most ordinary Windows users and describes Portable as a standalone build. V3 selects NVIDIA Portable specifically for the dedicated, agent-managed workstation because its embedded Python/runtime layout is explicit and can be placed under the workspace root with a controlled launcher. This is a trade-off, not a claim that Portable is universally superior. If a required custom node cannot run in the pinned Portable environment, evaluate a separate source + venv experimental runtime; do not mix environments or silently mutate the production runtime.
+
+Official guidance:
+- https://github.com/Comfy-Org/ComfyUI/blob/master/docs/installation.md
+- https://github.com/Comfy-Org/ComfyUI
