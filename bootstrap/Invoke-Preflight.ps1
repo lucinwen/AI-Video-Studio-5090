@@ -61,8 +61,8 @@ $cpuJson = $report.cpu | ConvertTo-Json -Compress
 $lines = @(
   "# AI Video Studio — Read-only preflight", "",
   "Generated: $($report.generated_at)", "",
-  "## OS", "`$osJson`", "",
-  "## CPU / RAM", "`$cpuJson`", "RAM: $($report.ram_gb) GiB", "",
+  "## OS", ('`' + $osJson + '`'), "",
+  "## CPU / RAM", ('`' + $cpuJson + '`'), "RAM: $($report.ram_gb) GiB", "",
   "## GPUs", "```", ($report.gpus | ConvertTo-Json -Depth 5), "```", "",
   "## Physical disks", "```", ($report.physical_disks | ConvertTo-Json -Depth 5), "```", "",
   "## Disk to partition mapping", "```", ($report.disk_partitions | ConvertTo-Json -Depth 5), "```", "",
