@@ -158,3 +158,15 @@ Use `docs/ACCEPTANCE.md`. At minimum:
 - At the end, summarize what actually works, what is experimental, what remains blocked, how to start the workstation, and how to update/rollback it.
 
 **Begin with preflight inspection now. Do not install or modify anything until the preflight report and installation plan are ready.**
+
+---
+
+## Executable first step (recommended)
+
+Before asking the agent to install anything, double-click `PREFLIGHT.bat` in the repository root. It performs read-only inventory and writes reports to:
+
+`%LOCALAPPDATA%\AI-Video-Studio\preflight\`
+
+Then ask the agent to read the generated JSON/Markdown report and map the Samsung physical disk to its mounted volume. Do not guess the drive letter. The workspace initializer supports `-WhatIf` and creates directories only; it does not format or repartition.
+
+The first milestone is **verified storage root + clean ComfyUI baseline**, not downloading every model. Follow [docs/BOOTSTRAP_SCRIPTS.md](docs/BOOTSTRAP_SCRIPTS.md).
