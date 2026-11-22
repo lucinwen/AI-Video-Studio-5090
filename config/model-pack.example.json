@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "id": "example-public-model-pack",
+  "name": "Example model pack (not downloadable until completed)",
+  "source": "https://huggingface.co/OWNER/REPOSITORY",
+  "license_id": "REVIEW_REQUIRED",
+  "license_url": "https://huggingface.co/OWNER/REPOSITORY",
+  "license_reviewed": false,
+  "gated": false,
+  "files": [
+    {
+      "url": "https://huggingface.co/OWNER/REPOSITORY/resolve/REVISION/path/to/file.safetensors",
+      "relative_path": "diffusion_models/file.safetensors",
+      "expected_bytes": null,
+      "sha256": null
+    }
+  ]
+}
