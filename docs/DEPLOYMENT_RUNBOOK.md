@@ -159,3 +159,11 @@ Write:
 - `00_CONTROL/recovery/ROLLBACK.md`
 
 Final report must list verified, experimental, blocked, and not-installed items separately, plus exact launch/update/rollback commands.
+
+## V3 scripted entry points
+
+- `INSTALL-V3.bat`: interactive first-run orchestration.
+- `bootstrap/Install-Core.ps1`: official ComfyUI NVIDIA Portable installation.
+- `bootstrap/Download-ModelPack.ps1`: public ungated artifact download from a reviewed JSON manifest.
+
+The model downloader is not a dependency resolver. The agent must construct a model pack from the exact official workflow requirements, inspect every URL and license, estimate disk usage, and then invoke the downloader. Gated models remain manual.
