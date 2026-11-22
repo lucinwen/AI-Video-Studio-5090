@@ -22,7 +22,7 @@ if (Test-Path $resolvedRoot) {
 $folders = @(
 "00_CONTROL\config","00_CONTROL\manifests","00_CONTROL\reports","00_CONTROL\recovery",
 "01_RUNTIME\comfyui","01_RUNTIME\environments","01_RUNTIME\snapshots",
-"02_MODELS\checkpoints","02_MODELS\diffusion_models","02_MODELS\text_encoders","02_MODELS\clip","02_MODELS\vae","02_MODELS\loras","02_MODELS\controlnet","02_MODELS\upscale_models","02_MODELS\video_models","02_MODELS\audio_models","02_MODELS\embeddings",
+"02_MODELS\checkpoints","02_MODELS\configs","02_MODELS\diffusion_models","02_MODELS\text_encoders","02_MODELS\clip","02_MODELS\clip_vision","02_MODELS\vae","02_MODELS\loras","02_MODELS\controlnet","02_MODELS\upscale_models","02_MODELS\latent_upscale_models","02_MODELS\video_models","02_MODELS\audio_models","02_MODELS\audio_encoders","02_MODELS\model_patches","02_MODELS\style_models","02_MODELS\frame_interpolation","02_MODELS\unet","02_MODELS\embeddings",
 "03_WORKFLOWS\ui","03_WORKFLOWS\api","03_WORKFLOWS\templates","03_WORKFLOWS\tests",
 "04_ASSETS\characters","04_ASSETS\locations","04_ASSETS\props","04_ASSETS\style_frames","04_ASSETS\audio",
 "05_PROJECTS","06_OUTPUTS\previews","06_OUTPUTS\approved","06_OUTPUTS\exports",
