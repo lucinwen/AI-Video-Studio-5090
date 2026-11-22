@@ -43,3 +43,5 @@ The V3 installer is a real first-stage core installer, not yet the promised comp
 - Added a manifest-driven downloader with HTTPS-only URLs, destination path traversal checks, free-space estimates, explicit license review and download confirmation, curl resume/retry, expected-size and optional SHA-256 checks, and no-overwrite behavior.
 - Added a JSON model-pack example and usage documentation.
 - This utility does not yet infer exact model files from ComfyUI workflow JSON; the local agent must prepare a reviewed pack manifest.
+
+The core installer resolves the latest release through the GitHub Releases API, records the exact release tag, asset URL, archive SHA-256, and size. Downloads use a resumable `.partial` file, test archive integrity before promotion, and retain incomplete files for diagnosis/resume.
