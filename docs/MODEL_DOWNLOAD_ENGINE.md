@@ -10,7 +10,7 @@ See `config/model-pack.example.json`.
 - `license_id`, `license_url`
 - `license_reviewed: true` only after a human reviewed the license and use restrictions
 - `gated: false`
-- `files[]` with HTTPS `url`, safe `relative_path`, optional `expected_bytes`, and optional `sha256`
+- `files[]` with HTTPS `url`, safe `relative_path`, required positive `expected_bytes`, and optional `sha256`
 
 The example manifest is intentionally non-runnable until completed and license-reviewed.
 
@@ -33,3 +33,6 @@ The script:
 If no publisher SHA-256 is provided, the computed hash only identifies the downloaded bytes; it does not independently prove upstream authenticity. Record that distinction.
 
 Gated repositories are deliberately blocked. Obtain access and review terms manually; do not store tokens in manifests or Git. This downloader does not resolve workflow dependencies automatically yet. The next stage is to build a workflow-to-artifact dependency resolver that generates reviewed pack manifests from official ComfyUI workflow metadata.
+
+
+Every artifact must declare a positive `expected_bytes` value. The downloader refuses to start if sizes are missing because it must estimate the full pack size before consuming the SSD. SHA-256 remains optional only when the publisher does not provide a checksum; in that case the locally computed digest is recorded as an identity value, not an authenticity proof.
