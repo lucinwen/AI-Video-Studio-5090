@@ -48,3 +48,13 @@ The launcher refuses to fall back to global Python and binds to localhost. Deskt
 - Use `-WhatIf` where supported.
 - Never run scripts downloaded from unreviewed third-party repositories.
 - These starter scripts are not a substitute for the full preflight, model-license, dependency, and acceptance requirements in `AGENTS.md`.
+
+## 5. Test the running ComfyUI service
+
+After ComfyUI has been started:
+
+```powershell
+.\bootstrap\Test-ComfyUI.ps1 -BaseUrl "http://127.0.0.1:8188" -PythonExe "E:\AI-Video-Studio\01_RUNTIME\comfyui\python_embeded\python.exe"
+```
+
+Replace the Python path with the actual isolated interpreter. For a source + venv runtime, use its `.venv\Scripts\python.exe`. Do not pass a global Python executable. This checks API reachability and PyTorch CUDA visibility; it does not replace an actual workflow generation test.
