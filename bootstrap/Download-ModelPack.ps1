@@ -24,7 +24,7 @@ foreach ($file in $manifest.files) {
   $target = [System.IO.Path]::GetFullPath((Join-Path (Join-Path $RootPath "02_MODELS") $relative))
   $modelsPrefix = [System.IO.Path]::GetFullPath((Join-Path $RootPath "02_MODELS")) + [System.IO.Path]::DirectorySeparatorChar
   if (-not $target.StartsWith($modelsPrefix,[System.StringComparison]::OrdinalIgnoreCase)) { throw "Target escaped model root: $target" }
-  $expected = if ($file.expected_bytes) { [int64]$file.expected_bytes } else { [int64]0 }
+  $expected = [int64]$file.expected_bytes
   $totalExpected += $expected
   $downloads += [pscustomobject]@{ file=$file; target=$target; expected=$expected }
 }
@@ -89,7 +89,7 @@ $recordPath = Join-Path $RootPath ("00_CONTROL\manifests\download-" + ($manifest
 $record | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $recordPath -Encoding UTF8
 Write-Host "Model artifact download pass completed. Record: $recordPath"
 )) { throw "Invalid SHA-256 value for $($file.relative_path)." }
-  if ($file.expected_bytes -and [int64]$file.expected_bytes -le 0) { throw "expected_bytes must be a positive integer when supplied." }
+  if (-not $file.expected_bytes -or [int64]$file.expected_bytes -le 0) { throw "expected_bytes must be a positive integer for every artifact so disk capacity can be checked before download." }
   $relative = [string]$file.relative_path
   if ([System.IO.Path]::IsPathRooted($relative) -or $relative -match '(^|[\\/])\.\.([\\/]|$)') { throw "Unsafe relative_path rejected: $relative" }
   $target = [System.IO.Path]::GetFullPath((Join-Path (Join-Path $RootPath "02_MODELS") $relative))
