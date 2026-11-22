@@ -108,3 +108,120 @@ test('keeps a known job recoverable while ComfyUI is slow to reconnect',async t=
   await until(async()=>(await(await fetch(s.base+'/api/jobs/'+id)).json()).state==='succeeded');
   a.equal(probes,4);
 });
+
+function seedPreset(p) {
+  return {...p,graph:{...p.graph,'3':{inputs:{seed:898471028164125,steps:20}}},seed:{node:'3',input:'seed'}};
+}
+function mockGeneration() {
+  const submissions=[], refUploads=[];
+  const request=async(address,options)=>{
+    const url=new URL(address);a.equal(url.origin,origin);
+    if(url.pathname==='/system_stats')return json({});
+    if(url.pathname==='/upload/image'){
+      const file=options.body.get('image');
+      const bytes=Buffer.from(await file.arrayBuffer());
+      refUploads.push({name:file.name,bytes});return json({name:file.name,type:'input'});
+    }
+    if(url.pathname==='/prompt'){
+      submissions.push(JSON.parse(options.body));return json({prompt_id:'mock1'});
+    }
+    if(url.pathname==='/history/mock1')return json(payload);
+    throw new Error('Unexpected upstream call: '+url.pathname);
+  };
+  return {request,submissions,refUploads};
+}
+const info=async(s,id)=>(await fetch(s.base+'/api/jobs/'+id)).json();
+const finished=(s,id)=>until(async()=>{const job=await info(s,id);return job.state==='succeeded'&&job;});
+async function revise(s,id,data,{from=s.base}={}){
+  return fetch(s.base+'/api/jobs/'+id+'/revisions',{method:'POST',headers:{'Content-Type':'application/json',Origin:from},
+    body:JSON.stringify(data)});
+}
+async function accept(r){const body=await r.json();a.equal(r.status,202,body.error);return body.id;}
+const refContents=Buffer.from(imageData.split(',')[1],'base64');
+
+test('private image and profile survive restart; revisions retain reference and seed by default',async t=>{
+  const stateDir=await fixture(t), {request,submissions,refUploads}=mockGeneration();
+  const opts={stateDir,presets:{image:seedPreset(image)},request};
+  const first=await open(opts);
+  const parent=await accept(await first.post({prompt:'first',image:imageData,retainReference:true}));
+  const before=await finished(first,parent);
+  await until(async()=>{const d=JSON.parse(await readFile(join(stateDir,parent+'.json'),'utf8'));return d.state==='succeeded'&&d;});
+  await first.stop();
+  const next=await open(opts);t.after(next.stop);
+  const parentInfo=await info(next,parent);
+  a.deepEqual(parentInfo,before);a.equal(parentInfo.hasReference,true);
+  a.equal(parentInfo.referenceRetained,true);a.equal(parentInfo.canRevise,true);
+  a.equal(parentInfo.seed,submissions[0].prompt['3'].inputs.seed);
+  a.ok(parentInfo.seed>=0&&parentInfo.seed<=0xffffffff);
+  const preview=await fetch(next.base+parentInfo.reference);
+  a.equal(preview.headers.get('content-type'),'image/png');
+  a.equal(preview.headers.get('cache-control'),'no-store');
+  a.deepEqual(Buffer.from(await preview.arrayBuffer()),refContents);
+  a.equal((await revise(next,parent,{prompt:'second'},{from:'https://elsewhere.example'})).status,403);
+  const child=await accept(await revise(next,parent,{prompt:'second'}));
+  const childInfo=await finished(next,child);
+  a.equal(childInfo.parentId,parent);a.equal(childInfo.seed,parentInfo.seed);
+  a.equal(childInfo.referenceRetained,true);
+  a.deepEqual(refUploads[1].bytes,refUploads[0].bytes);
+  const aGraph=structuredClone(submissions[0].prompt);
+  const bGraph=structuredClone(submissions[1].prompt);
+  // The receiver uses unique per-job names for identical source bytes; other generation inputs stay fixed.
+  aGraph['56'].inputs.image=bGraph['56'].inputs.image;
+  aGraph['6'].inputs.text='second';
+  a.deepEqual(aGraph,bGraph);
+  const reroll=await accept(await revise(next,parent,{prompt:'third',seedMode:'new',retainReference:false}));
+  const rerollInfo=await finished(next,reroll);
+  a.notEqual(rerollInfo.seed,parentInfo.seed);a.equal(rerollInfo.referenceRetained,false);
+  a.deepEqual(await info(next,parent),before);
+  const deletePath=next.base+parentInfo.reference;
+  a.equal((await fetch(deletePath,{method:'DELETE',headers:{Origin:'https://elsewhere.example'}})).status,403);
+  a.equal((await fetch(deletePath,{method:'DELETE',headers:{Origin:next.base}})).status,204);
+  a.equal((await fetch(deletePath)).status,404);
+  a.equal((await info(next,parent)).referenceRetained,false);
+  a.equal((await info(next,child)).referenceRetained,true);
+});
+
+test('unretained or corrupted sources cannot silently run; explicit replacement and unchanged graph required',async t=>{
+  const stateDir=await fixture(t), {request,submissions}=mockGeneration();
+  const options={stateDir,presets:{image:seedPreset(image)},request};
+  const first=await open(options);
+  const noRef=await accept(await first.post({prompt:'no retention',image:imageData}));
+  const result=await finished(first,noRef);
+  a.equal(result.canRevise,true);
+  a.equal(result.referenceRetained,false);
+  a.equal((await revise(first,noRef,{prompt:'missing source'})).status,409);
+  a.equal(submissions.length,1);
+  const replaced=await accept(await revise(first,noRef,{prompt:'new explicit source',image:imageData,retainReference:true}));
+  const replacement=await finished(first,replaced);
+  a.equal(replacement.parentId,noRef);
+  a.equal(replacement.referenceRetained,true);
+  await writeFile(join(stateDir,replaced+'.reference'),Buffer.alloc(refContents.length,0));
+  a.equal((await fetch(first.base+replacement.reference)).status,404);
+  a.equal((await revise(first,replaced,{prompt:'reject corrupt source'})).status,409);
+  a.equal(submissions.length,2);
+  await until(async()=>{const d=JSON.parse(await readFile(join(stateDir,replaced+'.json'),'utf8'));return d.state==='succeeded'&&d;});
+  await first.stop();
+  const changed=seedPreset(image);changed.graph['3'].inputs.steps=25;
+  const next=await open({...options,presets:{image:changed}});t.after(next.stop);
+  a.equal((await info(next,replaced)).canRevise,false);
+  a.equal((await revise(next,replaced,{prompt:'reject drift',image:imageData})).status,409);
+  a.equal(submissions.length,2);
+});
+
+test('text-only revisions do not silently switch modes and seedless legacy jobs remain playable',async t=>{
+  const {request,submissions}=mockGeneration();
+  const first=await open({presets:{text:seedPreset(text)},request});t.after(first.stop);
+  a.equal((await first.post({prompt:'invalid retain',retainReference:true})).status,400);
+  const parent=await accept(await first.post({prompt:'first'}));
+  const ready=await finished(first,parent);a.equal(ready.hasReference,false);
+  a.equal((await revise(first,parent,{prompt:'unexpected image',image:imageData})).status,409);
+  a.equal((await revise(first,parent,{prompt:'bad seed',seedMode:'unknown'})).status,400);
+  const child=await accept(await revise(first,parent,{prompt:'second'}));
+  a.equal((await finished(first,child)).seed,ready.seed);
+  const legacy=await open({presets:{text},request});t.after(legacy.stop);
+  const old=await accept(await legacy.post({prompt:'legacy'}));
+  const oldState=await finished(legacy,old);
+  a.equal(oldState.canRevise,false);a.equal(oldState.seed,undefined);a.ok(oldState.video);
+  a.equal((await revise(legacy,old,{prompt:'not a frozen seed'})).status,409);
+  a.equal(submissions.length,3);
+});

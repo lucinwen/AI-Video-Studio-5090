@@ -34,10 +34,14 @@ export function profileFromExport(payload, mode) {
   if (mode === 'text' && input != null) {
     throw new Error('文生视频导出时请停用参考图节点，节点 55 不应包含 start_image。');
   }
+  const sampler = graph['3'];
+  const seed = sampler?.inputs?.seed;
+  const canBindSeed = hasInputs(sampler, 'KSampler', ['seed']) && Number.isSafeInteger(seed) && seed >= 0;
   return {
     graph,
     prompt: { node: '6', input: 'text' },
     ...(mode === 'image' ? { image: { node: '56', input: 'image' } } : {}),
+    ...(canBindSeed ? { seed: { node: '3', input: 'seed' } } : {}),
     outputNode: '58'
   };
 }
@@ -57,6 +61,9 @@ async function main(args) {
     if (!(await stat(file)).isFile() || (await stat(file)).size > 1024 * 1024) throw new Error('API 图必须是 1 MiB 以下的本机文件。');
     const json = JSON.parse((await readFile(file, 'utf8')).replace(/^\uFEFF/, ''));
     profiles[mode] = profileFromExport(json, mode);
+    if (!profiles[mode].seed) {
+      console.warn(`${mode} 工作流未启用固定种子：需要节点 3 为 KSampler，且 seed 是非负安全整数。普通生成不受此配置项限制。`);
+    }
   }
   try {
     await writeFile(target, JSON.stringify(profiles, null, 2) + '\n', { flag: 'wx' });

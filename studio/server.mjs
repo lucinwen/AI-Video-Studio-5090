@@ -1,8 +1,8 @@
 import {createServer} from 'node:http';
-import {readFile,mkdir,readdir,writeFile,rename,unlink,stat} from 'node:fs/promises';
+import {readFile,mkdir,readdir,writeFile,rename,unlink,stat,lstat} from 'node:fs/promises';
 import {join} from 'node:path';
 import {homedir} from 'node:os';
-import {randomUUID} from 'node:crypto';
+import {randomUUID,randomInt,createHash} from 'node:crypto';
 import {Readable} from 'node:stream';
 import {pipeline} from 'node:stream/promises';
 import {pathToFileURL} from 'node:url';
@@ -10,23 +10,36 @@ import {pathToFileURL} from 'node:url';
 const MAX_IMAGE=8*1024*1024, MAX_BODY=Math.ceil(MAX_IMAGE*4/3)+16384;
 const validId=/^[\w-]{1,128}$/;
 const studioId=/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/;
+const MAX_JOBS=100;
+const REF_MIME=Object.freeze({png:'image/png',jpeg:'image/jpeg',webp:'image/webp'});
+const uint32=n=>Number.isInteger(n)&&n>=0&&n<=0xffffffff;
+const sha256=value=>createHash('sha256').update(value).digest('hex');
+const digestPattern=/^[a-f0-9]{64}$/;
+const canonical=o=>Array.isArray(o)?'['+o.map(canonical).join(',')+']':
+  o&&typeof o==='object'?'{'+Object.keys(o).sort().map(k=>JSON.stringify(k)+':'+canonical(o[k])).join(',')+'}':JSON.stringify(o);
 const isDone=job=>job.state==='succeeded'||job.state==='failed';
 const record=o=>!!o&&typeof o==='object'&&!Array.isArray(o);
 const err=(code,message)=>Object.assign(new Error(message),{code});
 
 function presetFor(p, mode) {
   if(!record(p?.graph)||!Object.keys(p.graph).length) throw new Error('缺少 API 格式工作流：'+mode);
-  function binding(b) {
+  function binding(b,type) {
     const inputs=p.graph[b?.node]?.inputs;
     if(typeof b?.node!=='string'||typeof b?.input!=='string'||!Object.hasOwn(p.graph,b.node)||
-      !record(inputs)||!Object.hasOwn(inputs,b.input)||typeof inputs[b.input]!=='string')
+      !record(inputs)||!Object.hasOwn(inputs,b.input)||(type==='seed'?
+        !Number.isSafeInteger(inputs[b.input])||inputs[b.input]<0:typeof inputs[b.input]!=='string'))
       throw new Error('工作流输入映射有误：'+mode);
     return {node:b.node,input:b.input};
   }
   if(typeof p.outputNode!=='string'||!validId.test(p.outputNode)||!Object.hasOwn(p.graph,p.outputNode))
     throw new Error('工作流输出节点有误：'+mode);
-  return {graph:structuredClone(p.graph),prompt:binding(p.prompt),
-    image:mode==='image'?binding(p.image):null,outputNode:p.outputNode};
+  const profile={graph:structuredClone(p.graph),prompt:binding(p.prompt,'text'),
+    image:mode==='image'?binding(p.image,'text'):null,
+    seed:p.seed==null?null:binding(p.seed,'seed'),outputNode:p.outputNode};
+  if(profile.image && profile.image.node===profile.prompt.node && profile.image.input===profile.prompt.input)
+    throw new Error('提示词不能与参考图共用同一个字段：'+mode);
+  // Hash trusted workflow structure/settings, not incidental JSON object order.
+  return {...profile,hash:sha256(canonical({mode,...profile}))};
 }
 async function bodyJSON(req) {
   const chunks=[];let size=0,exceeded=false;
@@ -39,16 +52,18 @@ async function bodyJSON(req) {
   });
   try{return JSON.parse(Buffer.concat(chunks).toString('utf8'));}catch{throw err(400,'请求格式不正确。');}
 }
+function validImage(bytes,kind) {
+  return kind==='png'?bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])):
+    kind==='jpeg'?bytes[0]===255&&bytes[1]===216&&bytes[2]===255:
+    kind==='webp'&&bytes.toString('ascii',0,4)==='RIFF'&&bytes.toString('ascii',8,12)==='WEBP';
+}
 function parseImage(value) {
   if(value==null||value==='')return null;
   const m=typeof value==='string' && /^data:(image\/(png|jpeg|webp));base64,([A-Za-z0-9+/]+={0,2})$/.exec(value);
   if(!m||m[3].length%4)throw err(400,'请上传 PNG、JPEG 或 WebP 图片。');
   const [mime,kind]=m.slice(1,3), bytes=Buffer.from(m[3],'base64');
   if(bytes.length>MAX_IMAGE)throw err(413,'参考图太大，请使用 8 MB 以内的图片。');
-  const valid=kind==='png'?bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])):
-    kind==='jpeg'?bytes[0]===255&&bytes[1]===216&&bytes[2]===255:
-    bytes.toString('ascii',0,4)==='RIFF'&&bytes.toString('ascii',8,12)==='WEBP';
-  if(!valid)throw err(400,'参考图不是有效的 PNG、JPEG 或 WebP 文件。');
+  if(!validImage(bytes,kind))throw err(400,'参考图不是有效的 PNG、JPEG 或 WebP 文件。');
   return {bytes,mime,kind};
 }
 function validArtifact(a) {
@@ -80,13 +95,45 @@ export function createStudio({presets,configError,request=fetch,html,upstreamOri
   const imageRequired=!!graph.image&&!graph.text;
   let stopping=false,stateError;
   function jobPath(id) {return join(stateDir,id+'.json');}
+  function referencePath(id) {return join(stateDir,id+'.reference');}
+  function validReference(ref) {
+    return record(ref)&&Object.hasOwn(REF_MIME,ref.kind)&&typeof ref.sha256==='string'&&digestPattern.test(ref.sha256)&&
+      Number.isSafeInteger(ref.bytes)&&ref.bytes>0&&ref.bytes<=MAX_IMAGE;
+  }
+  function sourceProfile(job) {
+    const current=job.mode==='image'?graph.image:job.mode==='text'?graph.text:null;
+    return isDone(job)&&current?.seed&&uint32(job.seed)&&current.hash===job.profileHash?current:null;
+  }
+  async function referenceAvailable(job) {
+    if(!stateDir||!validReference(job.reference))return false;
+    try {const st=await lstat(referencePath(job.id));return st.isFile()&&st.size===job.reference.bytes;}
+    catch{return false;}
+  }
+  async function readReference(job) {
+    if(!await referenceAvailable(job))return null;
+    try {
+      const bytes=await readFile(referencePath(job.id));
+      const {kind,sha256:expected,bytes:size}=job.reference;
+      return bytes.length===size&&sha256(bytes)===expected&&validImage(bytes,kind)?
+        {bytes,kind,mime:REF_MIME[kind]}:null;
+    } catch{return null;}
+  }
+  async function discardReference(id) {
+    if(!stateDir)return;
+    try {await unlink(referencePath(id));} catch(e){if(e.code!=='ENOENT')throw e;}
+  }
+  function chooseSeed(previous) {
+    const value=randomInt(0,0x100000000);
+    return value===previous?(value+1)%0x100000000:value;
+  }
   async function persist(job) {
     if(!stateDir)return;
     const temp=jobPath(job.id)+'.'+randomUUID()+'.tmp';
     try {
       await writeFile(temp,JSON.stringify({id:job.id,state:job.state,phase:job.phase,createdAt:job.createdAt,
         expiresAt:job.expiresAt,promptId:job.promptId,outputNode:job.outputNode,origin:job.origin,
-        error:job.error,artifact:job.artifact}),{encoding:'utf8',flag:'wx',mode:0o600});
+        error:job.error,artifact:job.artifact,mode:job.mode,seed:job.seed,
+        profileHash:job.profileHash,parentId:job.parentId,reference:job.reference}),{encoding:'utf8',flag:'wx',mode:0o600});
       await rename(temp,jobPath(job.id));
     } finally { await unlink(temp).catch(()=>{}); }
   }
@@ -106,11 +153,16 @@ export function createStudio({presets,configError,request=fetch,html,upstreamOri
             !['queued','running','succeeded','failed'].includes(j.state)||j.origin!==u.origin)return null;
           if(j.state==='succeeded'&&!validArtifact(j.artifact))return null;
           if(j.state!=='succeeded')delete j.artifact;
+          if(!validReference(j.reference))delete j.reference;
+          if(!studioId.test(j.parentId??''))delete j.parentId;
+          if(!uint32(j.seed))delete j.seed;
+          if(typeof j.profileHash!=='string'||!digestPattern.test(j.profileHash))delete j.profileHash;
+          if(j.mode!=='image'&&j.mode!=='text')delete j.mode;
           return j;
         }catch{return null;}
       }));
       const ordered=rows.filter(Boolean).sort((a,b)=>b.createdAt-a.createdAt);
-      for(const j of ordered.slice(0,100).reverse())jobs.set(j.id,j);
+      for(const j of ordered.slice(0,MAX_JOBS).reverse())jobs.set(j.id,j);
     } catch {stateError='本地任务记录无法读取或写入，请检查工作台的状态目录。';}
   }
   const restored=restore();
@@ -126,6 +178,7 @@ export function createStudio({presets,configError,request=fetch,html,upstreamOri
     try {
       const w=structuredClone(p.graph);
       w[p.prompt.node].inputs[p.prompt.input]=prompt;
+      if(p.seed)w[p.seed.node].inputs[p.seed.input]=job.seed;
       if(image) {
         const form=new FormData(), filename=job.id+'.'+image.kind;
         form.set('image',new Blob([image.bytes],{type:image.mime}),filename);
@@ -196,38 +249,95 @@ export function createStudio({presets,configError,request=fetch,html,upstreamOri
         return res.end(page);
       }
       if(req.method==='GET'&&path==='/api/status') {
-        const common={capabilities,imageRequired};
+        const common={capabilities,imageRequired,retentionAvailable:!!stateDir&&!stateError};
         if(stateError)return json(res,200,{...common,ready:false,mode:'setup',reason:stateError});
         if(!graph.text&&!graph.image)return json(res,200,{...common,ready:false,mode:'setup',reason:configError??'尚未配置本地 ComfyUI 工作流。'});
         try {const ping=await upstream('/system_stats',{},3500);await ping.body?.cancel();}
         catch{return json(res,200,{...common,ready:false,mode:'offline',reason:'本机 ComfyUI 未启动或无法连接。'});}
         return json(res,200,{...common,ready:true,mode:'comfyui'});
       }
-      if(req.method==='POST'&&path==='/api/jobs') {
-        if(req.headers.origin!==`http://${host}`||req.headers['sec-fetch-site']==='cross-site')
-          return json(res,403,{error:'只接受创作网页发出的请求。'});
+      const match=/^\/api\/jobs\/([a-f0-9-]{36})(?:\/(video|reference|revisions))?$/.exec(path);
+      const sameOrigin=req.headers.origin===`http://${host}`&&req.headers['sec-fetch-site']!=='cross-site';
+      if(req.method==='POST'&&(path==='/api/jobs'||match?.[2]==='revisions')) {
+        if(!sameOrigin)return json(res,403,{error:'只接受创作网页发出的请求。'});
         if((req.headers['content-type']??'').split(';')[0].trim().toLowerCase()!=='application/json')
           return json(res,415,{error:'请求必须使用 JSON。'});
         if(stateError)throw err(503,stateError);
         const data=await bodyJSON(req), prompt=typeof data?.prompt==='string'?data.prompt.trim():'';
         if(!record(data)||!prompt||prompt.length>2000)throw err(400,'请输入 1 至 2000 个字符的画面描述。');
-        const image=parseImage(data.image), p=graph[image?'image':'text'];
-        if(!p)throw err(409,image?'尚未配置图生视频工作流。':imageRequired?'请选择一张参考图。':'尚未配置文生视频工作流。');
+        if(data.retainReference!==undefined&&typeof data.retainReference!=='boolean')throw err(400,'参考图保留设置无效。');
+        const isRevision=match?.[2]==='revisions';
+        let retain=data.retainReference===true;
+        if(data.seedMode!==undefined&&(!isRevision||!['keep','new'].includes(data.seedMode)))throw err(400,'随机种子设置无效。');
+        let image=parseImage(data.image), p, parent, mode, seed;
+        if(isRevision) {
+          parent=jobs.get(match[1]);
+          if(!parent)throw err(404,'找不到要修改的任务。');
+          p=sourceProfile(parent);
+          if(!p)throw err(409,'原任务缺少可恢复的种子、尚未结束，或所用工作流设置已改变。请新建生成。');
+          mode=parent.mode;
+          if(mode==='text'&&image)throw err(409,'此任务来自文生视频；如需参考图，请新建图生视频。');
+          if(mode==='image'&&!image){
+            image=await readReference(parent);
+            if(!image)throw err(409,'没有可恢复的原参考图，请明确选择一张替换图片后再生成。');
+            retain=data.retainReference!==false;
+          }
+          seed=data.seedMode==='new'?chooseSeed(parent.seed):parent.seed;
+        } else {
+          mode=image?'image':'text';p=graph[mode];
+          if(!p)throw err(409,image?'尚未配置图生视频工作流。':imageRequired?'请选择一张参考图。':'尚未配置文生视频工作流。');
+          if(p.seed)seed=chooseSeed();
+        }
+        if(retain&&!image)throw err(400,'请先选择需要保留的参考图。');
+        if(retain&&!stateDir)throw err(409,'此启动模式未启用本地参考图保留。');
         if([...jobs.values()].filter(j=>['queued','running'].includes(j.state)).length>=4)throw err(429,'本机已有 4 个任务，请稍后再试。');
         const id=randomUUID(),job={id,state:'queued',phase:'submitting',origin:u.origin,
-          createdAt:Date.now(),outputNode:p.outputNode};
+          createdAt:Date.now(),outputNode:p.outputNode,mode,seed,profileHash:p.hash,parentId:parent?.id};
         jobs.set(id,job);
-        try{await persist(job);}catch{jobs.delete(id);throw err(503,'无法写入本地任务记录，没有启动生成。');}
-        if(jobs.size>100)for(const [old,j] of jobs)if(isDone(j)){
-          jobs.delete(old);if(stateDir)await unlink(jobPath(old)).catch(()=>{});break;
+        try{
+          if(retain){
+            await writeFile(referencePath(id),image.bytes,{flag:'wx',mode:0o600});
+            job.reference={kind:image.kind,bytes:image.bytes.length,sha256:sha256(image.bytes)};
+          }
+          await persist(job);
+        }catch{
+          jobs.delete(id);if(retain)await discardReference(id).catch(()=>{});
+          throw err(503,'无法写入本地任务记录，没有启动生成。');
+        }
+        if(jobs.size>MAX_JOBS)for(const [old,j] of jobs)if(isDone(j)){
+          jobs.delete(old);
+          if(stateDir){
+            await discardReference(old).catch(()=>{});
+            await unlink(jobPath(old)).catch(()=>{});
+          }
+          break;
         }
         json(res,202,{id});void generate(job,p,prompt,image);return;
       }
-      const match=/^\/api\/jobs\/([a-f0-9-]{36})(\/video)?$/.exec(path);
-      if(req.method==='GET'&&match) {
+      if(match?.[2]==='reference'&&req.method==='DELETE'){
+        if(!sameOrigin)return json(res,403,{error:'只接受创作网页发出的请求。'});
+        const job=jobs.get(match[1]);
+        if(!job)return json(res,404,{error:'找不到此任务。'});
+        await discardReference(job.id);
+        // Availability is derived from the stored file. Keep generation metadata immutable.
+        res.writeHead(204,{'Cache-Control':'no-store'});return res.end();
+      }
+      if(req.method==='GET'&&match&&match[2]!=='revisions') {
         const job=jobs.get(match[1]);
         if(!job)return json(res,404,{error:'找不到此任务，可能已超出近期历史记录。'});
-        if(!match[2])return json(res,200,{state:job.state,error:job.error,video:job.artifact?path+'/video':undefined});
+        if(!match[2]){
+          const referenceRetained=await referenceAvailable(job);
+          return json(res,200,{state:job.state,error:job.error,video:job.artifact?path+'/video':undefined,
+            canRevise:!!sourceProfile(job),hasReference:job.mode==='image'?true:job.mode==='text'?false:undefined,
+            referenceRetained,reference:referenceRetained?path+'/reference':undefined,seed:job.seed,parentId:job.parentId});
+        }
+        if(match[2]==='reference'){
+          if(req.headers['sec-fetch-site']==='cross-site')return json(res,403,{error:'参考图只限本机工作台预览。'});
+          const image=await readReference(job);
+          if(!image)return json(res,404,{error:'这张参考图未保留或已经不可用。'});
+          res.writeHead(200,{'Content-Type':image.mime,'Content-Length':image.bytes.length,'Cache-Control':'no-store'});
+          return res.end(image.bytes);
+        }
         if(!job.artifact)return json(res,404,{error:'视频尚未生成。'});
         const range=req.headers.range;
         if(range&&!/^bytes=(?:\d{1,15}-\d{0,15}|-\d{1,15})$/.test(range))return json(res,416,{error:'无效的视频播放范围。'});
