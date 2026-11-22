@@ -1,6 +1,6 @@
 # START HERE — give this entire task to your local Codex / AI Agent
 
-Clone this repository on the RTX 5090 workstation, open the repository folder in the local agent, and send the prompt below. The agent must execute the plan, not just explain it.
+Clone this repository on the RTX 5090 workstation. First double-click `PREFLIGHT.bat` (read-only), then open the repository folder in the local agent, let it inspect the generated report, and send the prompt below. The agent must execute the plan, not just explain it.
 
 ---
 
