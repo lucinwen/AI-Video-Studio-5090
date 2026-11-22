@@ -37,3 +37,9 @@ Additional committed files:
 - `docs/V3_INSTALLER.md` documents scope and limitations.
 
 The V3 installer is a real first-stage core installer, not yet the promised complete one-click model/workflow installer. It still requires 7-Zip (winget installation is offered only after explicit confirmation). It does not download Wan/LTX weights or install third-party custom nodes.
+
+## V3 model download utility (committed; not target-tested)
+
+- Added a manifest-driven downloader with HTTPS-only URLs, destination path traversal checks, free-space estimates, explicit license review and download confirmation, curl resume/retry, expected-size and optional SHA-256 checks, and no-overwrite behavior.
+- Added a JSON model-pack example and usage documentation.
+- This utility does not yet infer exact model files from ComfyUI workflow JSON; the local agent must prepare a reviewed pack manifest.
