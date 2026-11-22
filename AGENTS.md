@@ -181,3 +181,7 @@ For a fresh Windows 11 target, the supported first-run entry point is `INSTALL-V
 - The generated launch script routes Hugging Face, Torch, pip, and temp caches to the workspace and binds ComfyUI to 127.0.0.1.
 - If release metadata or archive layout changes, stop and update the installer based on official upstream documentation; do not guess filenames or paths.
 - After installation, start ComfyUI and run Test-ComfyUI.ps1. No video model is ready until its workflow passes acceptance tests.
+
+## 15. Model artifact download engine
+
+Use `bootstrap/Download-ModelPack.ps1` only with a reviewed JSON pack manifest. Require a human-reviewed license flag, ungated public files, HTTPS URLs, workspace-relative destinations, and an explicit DOWNLOAD confirmation. Prefer publisher-provided SHA-256 and expected file sizes. If publisher checksums are unavailable, record the computed hash as local identity only, not proof of upstream authenticity. Never put access tokens in manifests. Do not overwrite existing weights.
