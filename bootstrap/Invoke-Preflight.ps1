@@ -10,7 +10,7 @@ $report = [ordered]@{
   computer_name = $env:COMPUTERNAME
   user_name = $env:USERNAME
   os = $null; cpu = $null; ram_gb = $null
-  gpus = @(); physical_disks = @(); volumes = @()
+  gpus = @(); physical_disks = @(); disk_partitions = @(); volumes = @()
   commands = @{}
   warnings = @()
 }
@@ -32,6 +32,14 @@ try {
   })
 } catch { $report.warnings += "Physical disk query unavailable: $($_.Exception.Message)" }
 try {
+  $report.disk_partitions = @(Get-Disk | ForEach-Object {
+    $disk = $_
+    Get-Partition -DiskNumber $disk.Number -ErrorAction SilentlyContinue | ForEach-Object {
+      [ordered]@{ disk_number=$disk.Number; disk_friendly_name=$disk.FriendlyName; disk_model=$disk.Model; disk_size_bytes=$disk.Size; partition_number=$_.PartitionNumber; drive_letter=$_.DriveLetter; partition_size_bytes=$_.Size; type=[string]$_.Type }
+    }
+  })
+} catch { $report.warnings += "Disk/partition mapping unavailable: $($_.Exception.Message)" }
+try {
   $report.volumes = @(Get-Volume | Where-Object DriveLetter | ForEach-Object {
     [ordered]@{ drive_letter=$_.DriveLetter; path=("$($_.DriveLetter):\"); label=$_.FileSystemLabel; filesystem=$_.FileSystem; size_bytes=$_.Size; free_bytes=$_.SizeRemaining }
   })
@@ -48,7 +56,20 @@ if ($nvsmi) {
 $jsonPath = Join-Path $OutputDirectory "preflight-$stamp.json"
 $mdPath = Join-Path $OutputDirectory "preflight-$stamp.md"
 $report | ConvertTo-Json -Depth 8 | Set-Content -Encoding UTF8 $jsonPath
-$lines = @("# AI Video Studio — Read-only preflight", "", "Generated: $($report.generated_at)", "", "## OS", "`$($report.os | ConvertTo-Json -Compress)`", "", "## CPU / RAM", "`$($report.cpu | ConvertTo-Json -Compress)`", "RAM: $($report.ram_gb) GiB", "", "## GPUs", "```", ($report.gpus | ConvertTo-Json -Depth 5), "```", "", "## Physical disks", "```", ($report.physical_disks | ConvertTo-Json -Depth 5), "```", "", "## Volumes", "```", ($report.volumes | ConvertTo-Json -Depth 5), "```", "", "## Commands", "```", ($report.commands | ConvertTo-Json -Depth 5), "```", "", "## Warnings", ($report.warnings | ForEach-Object { "- $_" }))
+$osJson = $report.os | ConvertTo-Json -Compress
+$cpuJson = $report.cpu | ConvertTo-Json -Compress
+$lines = @(
+  "# AI Video Studio — Read-only preflight", "",
+  "Generated: $($report.generated_at)", "",
+  "## OS", "`$osJson`", "",
+  "## CPU / RAM", "`$cpuJson`", "RAM: $($report.ram_gb) GiB", "",
+  "## GPUs", "```", ($report.gpus | ConvertTo-Json -Depth 5), "```", "",
+  "## Physical disks", "```", ($report.physical_disks | ConvertTo-Json -Depth 5), "```", "",
+  "## Disk to partition mapping", "```", ($report.disk_partitions | ConvertTo-Json -Depth 5), "```", "",
+  "## Volumes", "```", ($report.volumes | ConvertTo-Json -Depth 5), "```", "",
+  "## Commands", "```", ($report.commands | ConvertTo-Json -Depth 5), "```", "",
+  "## Warnings", ($report.warnings | ForEach-Object { "- $_" })
+)
 $lines | Set-Content -Encoding UTF8 $mdPath
 Write-Host "Preflight complete (read-only)." -ForegroundColor Green
 Write-Host "JSON: $jsonPath"
