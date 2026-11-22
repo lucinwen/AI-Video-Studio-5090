@@ -53,6 +53,7 @@ foreach ($entry in $downloads) {
     throw "Target already exists and does not match the expected SHA-256 (or no expected SHA was supplied). Refusing to overwrite: $target"
   }
   $partial = "$target.partial"
+  if (-not $PSCmdlet.ShouldProcess($partial,"Download public model artifact from the reviewed HTTPS URL")) { return }
   Write-Host "Downloading $($file.relative_path)"
   & $curl.Source -L --fail --retry 5 --retry-delay 3 -C - --output $partial ([string]$file.url)
   if ($LASTEXITCODE -ne 0) { throw "Download failed; partial file retained for resume: $partial" }
