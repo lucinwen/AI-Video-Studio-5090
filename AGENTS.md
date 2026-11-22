@@ -15,7 +15,7 @@ Do not infer unknown facts. Record detected values.
 
 ## 2. Required behavior
 
-1. Read this file, README.md, START_HERE.md, and all docs before making system changes.
+1. Read this file, README.md, START_HERE.md, docs/LOCAL_CODEX_HANDOFF.zh-CN.md, and all applicable docs before making system changes. The local handoff updates the first-run sequence: parse and review scripts before executing any bootstrap entry point.
 2. Inspect the repository and current machine. Produce a preflight report first.
 3. Discover the Samsung 8 TB volume by model/serial/size/label and current mount point. Do not assume D:.
 4. Propose a directory root on that volume, default folder name `AI-Video-Studio`. Ask the user only if the volume is ambiguous or the chosen root already contains unrelated data.
@@ -164,7 +164,8 @@ Do not commit these local reports, model paths, serial numbers, usernames, or ge
 
 ## 13. Bootstrap script order
 
-- If running on Windows and `PREFLIGHT.bat` exists, run it before any install or storage mutation. Read both generated report files.
+- Before executing any bootstrap entry point, parse all PowerShell scripts with the target interpreter, review the call chain, and repair actual blockers. The handoff records issues found at commit `059923f`; inspect the current code rather than assuming they are still present or already fixed.
+- After script validation, if running on Windows and `PREFLIGHT.bat` exists, run it before any installation. Read both generated report files. Source checkout and report-file creation may precede installation; do not modify disks or existing user data.
 - Cross-check the Samsung physical disk and partition/volume mapping. Never choose a drive solely because it has about 8 TB capacity if the physical disk mapping is ambiguous.
 - After the user/agent confirms the exact mounted volume, run `Initialize-Workspace.ps1 -WhatIf`, inspect the proposed paths, then run it without `-WhatIf`. It creates directories and copies example config only when destination files do not already exist.
 - Run `Invoke-Doctor.ps1` after workspace initialization.
@@ -173,7 +174,7 @@ Do not commit these local reports, model paths, serial numbers, usernames, or ge
 
 ## 14. V3 executable installer
 
-For a fresh Windows 11 target, the supported first-run entry point is `INSTALL-V3.bat`. It invokes `bootstrap/Invoke-V3.ps1`, which performs preflight, Samsung disk-to-volume mapping, explicit workspace confirmation, a WhatIf preview, and the official NVIDIA Portable core install.
+For a fresh Windows 11 target, `INSTALL-V3.bat` is the intended core entry point after script review and repair. It is not a target-validated unattended deployment engine. It invokes `bootstrap/Invoke-V3.ps1`, which performs preflight, Samsung disk-to-volume mapping, explicit workspace confirmation, a WhatIf preview, and the official NVIDIA Portable core install.
 
 - Do not bypass its CREATE / CONTINUE / PRESERVE prompts.
 - If 7-Zip is missing, install only after the explicit INSTALL confirmation.
@@ -185,3 +186,10 @@ For a fresh Windows 11 target, the supported first-run entry point is `INSTALL-V
 ## 15. Model artifact download engine
 
 Use `bootstrap/Download-ModelPack.ps1` only with a reviewed JSON pack manifest. Require a human-reviewed license flag, ungated public files, HTTPS URLs, workspace-relative destinations, and an explicit DOWNLOAD confirmation. Prefer publisher-provided SHA-256 and expected file sizes. If publisher checksums are unavailable, record the computed hash as local identity only, not proof of upstream authenticity. Never put access tokens in manifests. Do not overwrite existing weights.
+
+
+## 16. Local Codex workspace and continuity
+
+Open the confirmed `AI-Video-Studio` workstation root for local deployment. Keep the code checkout at `00_CONTROL\repository\AI-Video-Studio-5090`; do not initialize a Git repository over the whole workstation data tree. Explicitly read this nested AGENTS file. Create or carefully extend a local root-level AGENTS pointer with the repository path, machine-local state files and resume instructions, preserving existing guidance.
+
+Persist actual state in `00_CONTROL\deployment-manifest.json` and `00_CONTROL\reports\NEXT_STEPS.md`. Do not assume the next chat has this conversation. Follow the directory, script-validation and acceptance details in `docs/LOCAL_CODEX_HANDOFF.zh-CN.md`. Machine reports and actual paths remain local.

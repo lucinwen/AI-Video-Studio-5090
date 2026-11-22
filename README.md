@@ -19,11 +19,13 @@ The installer must **discover** the Samsung SSD drive letter and volume details.
 
 ## Start here
 
-1. Clone this repository on the workstation.
-2. Open the repository folder in the local coding agent (Codex recommended).
-3. Send the complete prompt in [START_HERE.md](START_HERE.md).
-4. Let the agent execute the staged plan, asking for approval only at documented safety gates.
-5. Review [docs/ACCEPTANCE.md](docs/ACCEPTANCE.md) and the generated local deployment report.
+**已经坐在 5090 电脑前？先读 [本地 Codex 完整交接书](docs/LOCAL_CODEX_HANDOFF.zh-CN.md)。** 它说明盘符怎么确认、Codex 打开什么目录、仓库和模型分别放在哪里，以及可直接复制的执行任务。
+
+1. Use Codex locally on the actual workstation and identify the Samsung SSD volume.
+2. Open the whole `<confirmed-volume>:\AI-Video-Studio` workspace in Codex. Keep this repository at `00_CONTROL\repository\AI-Video-Studio-5090` inside that workspace.
+3. Send the execution prompt in [docs/LOCAL_CODEX_HANDOFF.zh-CN.md](docs/LOCAL_CODEX_HANDOFF.zh-CN.md) and explicitly read the repository's nested `AGENTS.md`.
+4. Parse and review the bootstrap scripts before executing any `.bat` or installer. Repair actual blockers, then proceed with hardware inventory and staged deployment.
+5. Review [docs/ACCEPTANCE.md](docs/ACCEPTANCE.md) and the generated local deployment report. The current scripts have not passed target-machine acceptance.
 
 ## What the local agent must build
 
@@ -94,7 +96,7 @@ The repository now includes conservative first-run scripts:
 - [bootstrap/Start-Studio.ps1](bootstrap/Start-Studio.ps1) — guarded launcher for verified Portable/source layouts; it refuses global Python fallback.
 - [config/workstation.example.yaml](config/workstation.example.yaml), model and workflow registry templates.
 
-**Important:** These scripts are starter bootstrap tools, not a finished unattended installer. The first local action should be `PREFLIGHT.bat`. Do not run workspace initialization until the Samsung volume is positively identified. Runtime/model installation is intentionally staged and must be implemented/tested on the target PC.
+**Important:** These scripts are starter bootstrap tools, not a finished unattended installer. Follow the [local Codex handoff](docs/LOCAL_CODEX_HANDOFF.zh-CN.md): inspect and parse scripts first, repair errors, then run preflight. The handoff records concrete issues found at commit `059923f`. Do not run workspace initialization until the Samsung volume is positively identified. Runtime/model installation must be tested on the target PC.
 
 See [docs/BOOTSTRAP_SCRIPTS.md](docs/BOOTSTRAP_SCRIPTS.md), [docs/BLACKWELL_PROFILE.md](docs/BLACKWELL_PROFILE.md), [docs/ROADMAP.md](docs/ROADMAP.md), and [docs/IMPLEMENTATION_STATUS.md](docs/IMPLEMENTATION_STATUS.md).
 

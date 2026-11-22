@@ -1,6 +1,8 @@
 # START HERE — give this entire task to your local Codex / AI Agent
 
-Clone this repository on the RTX 5090 workstation. First double-click `PREFLIGHT.bat` (read-only), then open the repository folder in the local agent, let it inspect the generated report, and send the prompt below. The agent must execute the plan, not just explain it.
+**2026-11-22 本地交接更新：请先使用 [本地 Codex 完整交接书](docs/LOCAL_CODEX_HANDOFF.zh-CN.md)。** 它明确工作站根目录、仓库子目录、可复制的中文任务和已知代码问题。先由 agent 解析、审查并修复脚本，再执行预检或安装；不要把双击旧入口作为未经检查的第一步。
+
+Open the confirmed `AI-Video-Studio` workstation root in local Codex, and keep this repository in `00_CONTROL\repository\AI-Video-Studio-5090`. Explicitly read its `AGENTS.md`. The older broad task below remains background guidance; use the updated handoff for the local execution sequence.
 
 ---
 
@@ -163,7 +165,7 @@ Use `docs/ACCEPTANCE.md`. At minimum:
 
 ## Executable first step (recommended)
 
-Before asking the agent to install anything, double-click `PREFLIGHT.bat` in the repository root. It performs read-only inventory and writes reports to:
+After the agent has parsed, reviewed, and repaired the scripts, run `PREFLIGHT.bat` from the repository root. It performs read-only inventory and writes reports to:
 
 `%LOCALAPPDATA%\AI-Video-Studio\preflight\`
 
@@ -175,8 +177,8 @@ The first milestone is **verified storage root + clean ComfyUI baseline**, not d
 
 ## V3 one-click core bootstrap
 
-For a new Windows 11 workstation, after cloning this repository:
-1. Run `INSTALL-V3.bat` from Explorer or PowerShell.
+For a new Windows 11 workstation, after cloning this repository and completing the script checks in the local handoff:
+1. Run the reviewed and repaired `INSTALL-V3.bat` entry point from Explorer or PowerShell.
 2. Review the preflight report.
 3. Confirm the detected Samsung SSD volume by typing `CREATE`.
 4. Review the `-WhatIf` folder plan and type `CONTINUE`.
