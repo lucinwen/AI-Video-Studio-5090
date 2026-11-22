@@ -1,0 +1,33 @@
+# Copy to 00_CONTROL/config/workstation.yaml on the workstation.
+# Replace detected paths only after running bootstrap/Invoke-Preflight.ps1.
+schema_version: 1
+workstation:
+  os: windows-11
+  gpu_target: NVIDIA GeForce RTX 5090
+  expected_vram_gib: 32
+  expected_ram_gib: 128
+storage:
+  # Example only. Never assume the SSD drive letter.
+  root: null
+  minimum_free_percent: 15
+  never_format_or_repartition: true
+runtime:
+  strategy: undecided
+  # Choose exactly one after checking current official docs:
+  # desktop | nvidia-portable | source-venv
+  comfyui_root: null
+  bind_host: 127.0.0.1
+  port: 8188
+models:
+  shared_root: null
+  download_concurrency: 1
+  require_license_review: true
+  verify_sha256: true
+safety:
+  allow_driver_updates: false
+  allow_wsl2_enablement: false
+  allow_firewall_changes: false
+  allow_gated_downloads: false
+  allow_paid_services: false
+  allow_auto_delete_cache_only: true
+  allow_overwrite_approved_outputs: false
