@@ -77,6 +77,8 @@ Get-ChildItem -LiteralPath $sourceRoot -Force | ForEach-Object {
   Move-Item -LiteralPath $_.FullName -Destination $runtimeRoot
 }
 Remove-Item -LiteralPath $sourceRoot -Force
+$embeddedPython = Join-Path $runtimeRoot "python_embeded\python.exe"
+if (-not (Test-Path $embeddedPython)) { throw "Embedded Python was not found after runtime move: $embeddedPython" }
 $comfyRoot = Join-Path $runtimeRoot "ComfyUI"
 $externalConfig = @"
 comfyui:
