@@ -1,7 +1,18 @@
 schema_version: 1
-# Candidate entries are intentionally PLANNED. Agent must resolve exact revision,
-# official files, size, license, and Windows/Blackwell support before download.
+# Candidate entries are intentionally PLANNED. Resolve exact revision, files,
+# license, sizes, hashes and Windows/Blackwell compatibility before downloading.
 models:
+  - id: image-model-primary
+    family: image-generation
+    task: [text-to-image, image-to-image]
+    status: PLANNED
+    selection_policy:
+      source: https://comfy.org/workflows/tag/text-to-image/
+      choose_one_primary_model: true
+      verify_windows_blackwell: true
+      verify_license: true
+      verify_actual_vram: true
+      note: "The local agent selects one model from a current official ComfyUI workflow. Do not assume a model or weights are installed."
   - id: wan-2.2-5b-ti2v
     family: Wan 2.2
     task: [text-to-video, image-to-video]

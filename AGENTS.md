@@ -193,3 +193,18 @@ Use `bootstrap/Download-ModelPack.ps1` only with a reviewed JSON pack manifest. 
 Open the confirmed `AI-Video-Studio` workstation root for local deployment. Keep the code checkout at `00_CONTROL\repository\AI-Video-Studio-5090`; do not initialize a Git repository over the whole workstation data tree. Explicitly read this nested AGENTS file. Create or carefully extend a local root-level AGENTS pointer with the repository path, machine-local state files and resume instructions, preserving existing guidance.
 
 Persist actual state in `00_CONTROL\deployment-manifest.json` and `00_CONTROL\reports\NEXT_STEPS.md`. Do not assume the next chat has this conversation. Follow the directory, script-validation and acceptance details in `docs/LOCAL_CODEX_HANDOFF.zh-CN.md`. Machine reports and actual paths remain local.
+
+
+## 17. Image-to-video pipeline integration
+
+- Reuse the existing ComfyUI server; do not build a second inference backend.
+- Read `docs/IMAGE_VIDEO_PIPELINES.zh-CN.md` before changing image/video orchestration.
+- Use `studio/` as the standard-library-only local pipeline package.
+- The two priority routes are prompt-to-image-to-video and image-to-video.
+- Export actual API-format graphs from the user's ComfyUI installation. Never invent node IDs, input names, model revisions, or runnable workflow JSON.
+- Keep the runtime registry under StudioRoot/00_CONTROL/manifests, and API graphs under StudioRoot/03_WORKFLOWS/api. Do not place private machine workflows or model weights in Git.
+- Enable a registry workflow only after its graph, model IDs, node bindings, and real local inference have been checked.
+- In prompt-to-image-to-video, save all image candidates and let the user select the keyframe before submitting I2V. For unattended runs, require an explicit image index.
+- Preserve generated files and metadata under unique run IDs; never overwrite an approved output.
+- Use the ComfyUI local API only at 127.0.0.1. Record API prompt IDs, seeds, elapsed times, model IDs and output hashes.
+- Run unit tests before commit. Do not claim local GPU smoke tests from repository tests alone.

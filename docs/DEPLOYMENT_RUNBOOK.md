@@ -167,3 +167,19 @@ Final report must list verified, experimental, blocked, and not-installed items 
 - `bootstrap/Download-ModelPack.ps1`: public ungated artifact download from a reviewed JSON manifest.
 
 The model downloader is not a dependency resolver. The agent must construct a model pack from the exact official workflow requirements, inspect every URL and license, estimate disk usage, and then invoke the downloader. Gated models remain manual.
+
+
+## Phase 8A — optional image-generation front end
+
+After the ComfyUI video workflow is stable:
+1. Run `python -m studio.cli --root "<StudioRoot>" init` from the repository root.
+2. Choose one official, locally runnable ComfyUI text-to-image workflow for the RTX 5090; do not bulk-download multiple image model families.
+3. Export the tested T2I and I2V graphs in API format to StudioRoot/03_WORKFLOWS/api.
+4. Configure StudioRoot/00_CONTROL/manifests/image-video-pipeline.json with exact node IDs, input names, model IDs and enabled flags.
+5. Run the registry validator and unit tests.
+6. Run both supported routes and verify actual outputs:
+   - prompt-to-image-to-video;
+   - image-to-video.
+7. Keep the optional reference-to-image workflow disabled until independently tested.
+
+See docs/IMAGE_VIDEO_PIPELINES.zh-CN.md. The pipeline code uses ComfyUI's local HTTP API; it does not require a second inference engine.

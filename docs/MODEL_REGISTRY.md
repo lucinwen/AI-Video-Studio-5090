@@ -128,3 +128,10 @@ A tool is only selected after source, license, dependencies, hardware support, a
 - Use resumable downloads and hash verification.
 - Keep original files immutable; use separate derived/quantized copies.
 - Maintain a model inventory with last-used date and disk usage.
+
+
+## Image-generation model selection
+
+The image model is intentionally not hard-coded in the shared pipeline. ComfyUI's official workflow library currently lists multiple local image families (including SDXL, Flux, Qwen Image, Z-Image and Hunyuan Image). The local agent must choose one primary model using the current official workflow, actual RTX 5090 VRAM use, Windows/Blackwell support, license, file size and output quality. Record exact model IDs/revisions and all text encoders, VAE and auxiliary components. Do not download multiple competing image families before the first path is proven.
+
+Official workflow library: https://comfy.org/workflows/tag/text-to-image/

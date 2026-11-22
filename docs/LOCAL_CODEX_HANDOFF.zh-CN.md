@@ -195,3 +195,44 @@
 - [ComfyUI 官方代码与安装说明](https://github.com/Comfy-Org/ComfyUI)
 
 以上链接用于部署时核对。版本、文件名、权限界面和模型兼容性以当时的官方资料与本机测试为准。
+
+
+## 8. 生图前置层：本次新增的工程接入任务
+
+通用编排代码已经提交在仓库的 `studio/`，本机配置和真实 ComfyUI API workflow 仍需在 5090 上完成。
+
+### 8.1 初始化本机工作流目录
+
+从 RepoRoot 执行：
+
+```powershell
+python -m studio.cli --root "E:\\AI-Video-Studio" init
+```
+
+这会在 StudioRoot 下创建 image/video workflow API 目录，并将仓库的 example registry 复制到：
+
+`E:\\AI-Video-Studio\\00_CONTROL\\manifests\\image-video-pipeline.json`
+
+若本机 registry 已存在，初始化不会覆盖它。
+
+### 8.2 导出真实工作流并绑定
+
+在 ComfyUI 中分别验证一条 text-to-image 和一条 image-to-video 工作流，导出 API-format JSON 到：
+
+- `E:\\AI-Video-Studio\\03_WORKFLOWS\\api\\image\\text_to_image\\workflow_api.json`
+- `E:\\AI-Video-Studio\\03_WORKFLOWS\\api\\video\\image_to_video\\workflow_api.json`
+
+编辑本机 registry，填写真实 node IDs、inputs、model_ids。不要把普通 UI workflow JSON 当作 API prompt graph；不要保留 SET_NODE_ID 占位符。完成后执行：
+
+```powershell
+python -m studio.cli --root "E:\\AI-Video-Studio" validate
+python -m studio.cli --root "E:\\AI-Video-Studio" health
+python -m unittest discover -s tests -v
+```
+
+### 8.3 验收两条链路
+
+- Prompt → image → video：生成候选图，用户选择关键帧，再提交 I2V。
+- Image + motion prompt → video：上传已有图片，直接执行 I2V。
+
+具体命令和输出目录见 [IMAGE_VIDEO_PIPELINES.zh-CN.md](IMAGE_VIDEO_PIPELINES.zh-CN.md)。真实生成成功并通过 FFprobe/解码检查前，不得将本机 registry 状态标记为已验收。

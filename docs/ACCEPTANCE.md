@@ -110,3 +110,18 @@ Summarize:
 6. GPU peak memory for each workflow.
 7. Start, stop, update, and rollback commands.
 8. Outstanding approvals or credentials needed.
+
+
+## G. Image generation and image-to-video pipelines
+
+- [ ] Local pipeline registry initialized without overwriting an existing registry.
+- [ ] Text-to-image API graph exported from the local ComfyUI instance.
+- [ ] Image-to-video API graph exported from the local ComfyUI instance.
+- [ ] Every enabled workflow has real model IDs, API node IDs, input names and model files.
+- [ ] Registry validation passes; no placeholder node IDs remain.
+- [ ] Prompt-to-image-to-video produces at least one image candidate, allows keyframe selection, submits the selected image to I2V and saves a playable video.
+- [ ] Image-plus-prompt-to-video uploads an existing image and saves a playable video.
+- [ ] Run metadata records prompt, negative prompt, motion prompt, seed, workflow/model IDs, ComfyUI prompt IDs, elapsed time, output paths and hashes.
+- [ ] Video outputs pass FFprobe and full decode checks.
+- [ ] Candidate images and videos remain outside the Git repository.
+- [ ] Human visual review is recorded separately from technical smoke testing.

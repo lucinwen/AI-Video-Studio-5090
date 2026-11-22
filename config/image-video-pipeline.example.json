@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "comfyui": {
+    "base_url": "http://127.0.0.1:8188",
+    "request_timeout": 30
+  },
+  "workflows": {
+    "text_to_image": {
+      "id": "local-text-to-image",
+      "enabled": false,
+      "status": "PLANNED",
+      "api_workflow": "03_WORKFLOWS/api/image/text_to_image/workflow_api.json",
+      "artifact_kind": "image",
+      "model_ids": [],
+      "bindings": [
+        {"node_id": "SET_NODE_ID", "input": "text", "source": "prompt", "cast": "str", "required": true},
+        {"node_id": "SET_NODE_ID", "input": "seed", "source": "seed", "cast": "int", "required": true},
+        {"node_id": "SET_NODE_ID", "input": "text", "source": "negative_prompt", "cast": "str", "required": false},
+        {"node_id": "SET_NODE_ID", "input": "text", "source": "style_prompt", "cast": "str", "required": false}
+      ]
+    },
+    "image_to_video": {
+      "id": "local-image-to-video",
+      "enabled": false,
+      "status": "PLANNED",
+      "api_workflow": "03_WORKFLOWS/api/video/image_to_video/workflow_api.json",
+      "artifact_kind": "video",
+      "model_ids": [],
+      "bindings": [
+        {"node_id": "SET_IMAGE_NODE_ID", "input": "image", "source": "image_filename", "cast": "str", "required": true},
+        {"node_id": "SET_PROMPT_NODE_ID", "input": "text", "source": "motion_prompt", "cast": "str", "required": true},
+        {"node_id": "SET_SEED_NODE_ID", "input": "seed", "source": "seed", "cast": "int", "required": false},
+        {"node_id": "SET_CAMERA_NODE_ID", "input": "text", "source": "camera_prompt", "cast": "str", "required": false}
+      ]
+    },
+    "reference_to_image": {
+      "id": "local-reference-to-image",
+      "enabled": false,
+      "status": "EXPERIMENTAL",
+      "api_workflow": "03_WORKFLOWS/api/image/reference_to_image/workflow_api.json",
+      "artifact_kind": "image",
+      "model_ids": [],
+      "bindings": []
+    }
+  },
+  "_instructions": "Copy to <StudioRoot>/00_CONTROL/manifests/image-video-pipeline.json. Export real API-format graphs from ComfyUI, replace every SET_NODE_ID with real node IDs and input names, validate, then set enabled=true. This template is intentionally not runnable."
+}

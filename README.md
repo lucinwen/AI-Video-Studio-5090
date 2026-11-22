@@ -124,3 +124,20 @@ This V3 milestone installs the **ComfyUI core only**. It does not bulk-download 
 - [bootstrap/Invoke-V3.ps1](bootstrap/Invoke-V3.ps1) / [INSTALL-V3.bat](INSTALL-V3.bat) — interactive V3 core bootstrap.
 - [bootstrap/Download-ModelPack.ps1](bootstrap/Download-ModelPack.ps1) — resumable, manifest-driven HTTPS model artifact downloader with license, path, size, and hash gates.
 - [config/model-pack.example.json](config/model-pack.example.json) — model pack manifest schema.
+
+
+## Optional image-generation front end for video
+
+The repository now includes a registry-driven Python pipeline layer in `studio/`:
+- Prompt → image candidates → interactive keyframe selection → image-to-video.
+- Existing image + motion prompt → image-to-video.
+- ComfyUI is still the single inference engine; image and video graphs remain separate and replaceable.
+- Outputs and run metadata are stored under the workstation's 05_PROJECTS tree, outside Git.
+
+Read [docs/IMAGE_VIDEO_PIPELINES.zh-CN.md](docs/IMAGE_VIDEO_PIPELINES.zh-CN.md). Initialize a local registry with:
+
+```powershell
+python -m studio.cli --root "E:\\AI-Video-Studio" init
+```
+
+The example registry is intentionally disabled until the local agent exports real ComfyUI API-format workflows and maps actual node IDs/inputs. This repository does not claim that image models are installed or that the pipelines have already run on the user's RTX 5090.

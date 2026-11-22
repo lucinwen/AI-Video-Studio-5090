@@ -1,0 +1,37 @@
+schema_version: 1
+# Documentation/agent-facing registry. Runtime pipeline uses image-video-pipeline.example.json.
+workflows:
+  - id: image-text-to-image
+    key: text_to_image
+    family: image
+    mode: text-to-image
+    status: PLANNED
+    workflow_path: 03_WORKFLOWS/api/image/text_to_image/workflow_api.json
+    output_kind: image
+    purpose: Generate candidate keyframes from a text prompt.
+  - id: image-reference-to-image
+    key: reference_to_image
+    family: image
+    mode: image-to-image
+    status: EXPERIMENTAL
+    workflow_path: 03_WORKFLOWS/api/image/reference_to_image/workflow_api.json
+    output_kind: image
+    purpose: Restyle or refine a reference into a video-ready keyframe.
+  - id: video-image-to-video
+    key: image_to_video
+    family: video
+    mode: image-to-video
+    status: PLANNED
+    workflow_path: 03_WORKFLOWS/api/video/image_to_video/workflow_api.json
+    output_kind: video
+    purpose: Animate a keyframe using a motion prompt.
+  - id: pipeline-prompt-to-image-to-video
+    key: prompt_to_image_to_video
+    family: pipeline
+    status: PLANNED
+    stages: [text_to_image, image_to_video]
+  - id: pipeline-image-prompt-to-video
+    key: image_prompt_to_video
+    family: pipeline
+    status: PLANNED
+    stages: [image_to_video]

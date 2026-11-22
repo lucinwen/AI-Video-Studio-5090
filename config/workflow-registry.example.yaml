@@ -1,9 +1,17 @@
 schema_version: 1
 workflows:
-  - id: image-smoke-test
+  - id: image-text-to-image
     family: image
+    mode: text-to-image
     status: PLANNED
-    acceptance: "Generate one small image and verify output decode."
+    workflow_path: 03_WORKFLOWS/api/image/text_to_image/workflow_api.json
+    output_kind: image
+  - id: image-reference-to-image
+    family: image
+    mode: image-to-image
+    status: EXPERIMENTAL
+    workflow_path: 03_WORKFLOWS/api/image/reference_to_image/workflow_api.json
+    output_kind: image
   - id: wan22-5b-t2v
     family: text-to-video
     status: PLANNED
@@ -30,3 +38,11 @@ workflows:
   - id: frame-interpolation
     family: finishing
     status: PLANNED
+  - id: pipeline-prompt-to-image-to-video
+    family: pipeline
+    status: PLANNED
+    stages: [image-text-to-image, wan22-5b-i2v]
+  - id: pipeline-image-prompt-to-video
+    family: pipeline
+    status: PLANNED
+    stages: [wan22-5b-i2v]

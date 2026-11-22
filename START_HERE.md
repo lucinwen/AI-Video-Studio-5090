@@ -187,3 +187,8 @@ For a new Windows 11 workstation, after cloning this repository and completing t
 7. Wait for official ComfyUI NVIDIA Portable download, archive integrity test, extraction, and runtime manifest.
 
 The installer refuses to overwrite an existing ComfyUI runtime. If it stops, preserve the staging archive and logs, read the error, and fix the cause before rerunning. It does not install video models or third-party nodes yet.
+
+
+## Optional image generation before video
+
+The image/video pipeline layer is now included in `studio/`. After the local ComfyUI instance and video workflow are working, follow [docs/IMAGE_VIDEO_PIPELINES.zh-CN.md](docs/IMAGE_VIDEO_PIPELINES.zh-CN.md) to initialize the local registry, export actual API-format image/video workflows, and validate the two routes. Do not treat the example registry as runnable until real node bindings and models are configured.
