@@ -104,3 +104,16 @@ See [docs/BOOTSTRAP_SCRIPTS.md](docs/BOOTSTRAP_SCRIPTS.md), [docs/BLACKWELL_PROF
 
 - [bootstrap/Test-ComfyUI.ps1](bootstrap/Test-ComfyUI.ps1) — checks the local ComfyUI API and optionally probes CUDA using the selected isolated Python interpreter.
 - [docs/BLACKWELL_PROFILE.md](docs/BLACKWELL_PROFILE.md) — RTX 5090-specific test plan, including LTX Blackwell NVFP4 evaluation.
+
+## V3 executable core bootstrap
+
+The V3 entry point is [INSTALL-V3.bat](INSTALL-V3.bat). It:
+1. runs read-only preflight;
+2. identifies mounted Samsung 8 TB physical disk candidates by disk metadata and partition mapping;
+3. asks for explicit confirmation before creating the workspace;
+4. previews directory creation with PowerShell `-WhatIf`;
+5. asks before installing 7-Zip via winget if missing;
+6. resolves the current official ComfyUI NVIDIA Portable release asset, downloads and tests the archive, extracts to a staging directory, and installs without overwriting an existing runtime;
+7. configures shared model paths and a local-only launch script.
+
+This V3 milestone installs the **ComfyUI core only**. It does not bulk-download video models, install unreviewed custom nodes, or claim video generation is ready. Continue with [docs/V3_INSTALLER.md](docs/V3_INSTALLER.md), [docs/BLACKWELL_PROFILE.md](docs/BLACKWELL_PROFILE.md), and [docs/ACCEPTANCE.md](docs/ACCEPTANCE.md).
