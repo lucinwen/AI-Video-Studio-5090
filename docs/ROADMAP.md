@@ -65,3 +65,17 @@ Status: NOT_IMPLEMENTED
 ## Release gate
 
 Do not call this a one-click installer or production-ready workstation until M1–M5 have passed their acceptance tests on the target machine. The current repository is an agent-readable deployment blueprint with initial safe bootstrap scripts.
+
+## V3 core bootstrap milestone
+
+Status: COMMITTED_TO_GIT / NOT_RUN_ON_TARGET
+- [x] Interactive entry point and read-only preflight orchestration.
+- [x] Samsung physical-disk to mounted-volume candidate mapping.
+- [x] Explicit confirmation and WhatIf workspace initialization.
+- [x] Official NVIDIA Portable release metadata resolution.
+- [x] Download, 7z integrity test, staging extraction, layout check, and no-overwrite policy.
+- [x] External shared model paths and cache/output routing in launch script.
+- [ ] Run PowerShell scripts on target Windows 11 and fix any runtime issues.
+- [ ] Verify ComfyUI API and CUDA on RTX 5090.
+- [ ] Implement model dependency resolver and resumable model download queue.
+- [ ] Implement workflow packs and real Wan/LTX generation tests.
