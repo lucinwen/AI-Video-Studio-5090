@@ -161,3 +161,12 @@ and machine-readable manifest to:
 `<SSD>:\AI-Video-Studio\00_CONTROL\deployment-manifest.json`.
 
 Do not commit these local reports, model paths, serial numbers, usernames, or generated assets to Git unless the user explicitly asks.
+
+## 13. Bootstrap script order
+
+- If running on Windows and `PREFLIGHT.bat` exists, run it before any install or storage mutation. Read both generated report files.
+- Cross-check the Samsung physical disk and partition/volume mapping. Never choose a drive solely because it has about 8 TB capacity if the physical disk mapping is ambiguous.
+- After the user/agent confirms the exact mounted volume, run `Initialize-Workspace.ps1 -WhatIf`, inspect the proposed paths, then run it without `-WhatIf`. It creates directories and copies example config only when destination files do not already exist.
+- Run `Invoke-Doctor.ps1` after workspace initialization.
+- After ComfyUI is installed and started, run `Test-ComfyUI.ps1` against localhost and the selected isolated Python executable.
+- The scripts are starter automation and must be reviewed and tested on the target Windows machine. Do not claim PowerShell runtime validation from static inspection alone.
