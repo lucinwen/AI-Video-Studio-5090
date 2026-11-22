@@ -1,0 +1,16 @@
+@echo off
+REM Copy to <workspace>\scripts\launch-comfyui.bat and replace STUDIO_ROOT.
+setlocal
+set "STUDIO_ROOT=E:\AI-Video-Studio"
+set "HF_HOME=%STUDIO_ROOT%\07_CACHE\huggingface"
+set "HUGGINGFACE_HUB_CACHE=%HF_HOME%\hub"
+set "TORCH_HOME=%STUDIO_ROOT%\07_CACHE\torch"
+set "PIP_CACHE_DIR=%STUDIO_ROOT%\07_CACHE\pip"
+set "TEMP=%STUDIO_ROOT%\07_CACHE\temp"
+set "TMP=%TEMP%"
+if not exist "%TEMP%" mkdir "%TEMP%"
+if not exist "%HF_HOME%" mkdir "%HF_HOME%"
+if not exist "%TORCH_HOME%" mkdir "%TORCH_HOME%"
+cd /d "%STUDIO_ROOT%\01_RUNTIME\comfyui\ComfyUI"
+"..\python_embeded\python.exe" main.py --listen 127.0.0.1 --port 8188 --output-directory "%STUDIO_ROOT%\06_OUTPUTS" --input-directory "%STUDIO_ROOT%\04_ASSETS" --user-directory "%STUDIO_ROOT%\00_CONTROL\comfy-user"
+endlocal
