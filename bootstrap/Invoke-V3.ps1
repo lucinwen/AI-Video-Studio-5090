@@ -70,6 +70,7 @@ if ($confirmExisting) { & $init -RootPath $root -ConfirmExisting } else { & $ini
 # Phase 4: ensure 7-Zip exists. Installing a system package requires explicit confirmation.
 $sevenZip = Get-Command 7z -ErrorAction SilentlyContinue
 if (-not $sevenZip) { $sevenZip = Get-Command 7zz -ErrorAction SilentlyContinue }
+if (-not $sevenZip) { $sevenZip = Get-Command 7za -ErrorAction SilentlyContinue }
 if (-not $sevenZip) {
   $known = @("$env:ProgramFiles\7-Zip\7z.exe","${env:ProgramFiles(x86)}\7-Zip\7z.exe")
   $sevenZipPath = $known | Where-Object { Test-Path $_ } | Select-Object -First 1
