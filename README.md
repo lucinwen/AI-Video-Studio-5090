@@ -96,7 +96,11 @@ The repository now includes conservative first-run scripts:
 
 **Important:** These scripts are starter bootstrap tools, not a finished unattended installer. The first local action should be `PREFLIGHT.bat`. Do not run workspace initialization until the Samsung volume is positively identified. Runtime/model installation is intentionally staged and must be implemented/tested on the target PC.
 
-See [docs/BOOTSTRAP_SCRIPTS.md](docs/BOOTSTRAP_SCRIPTS.md) and [docs/BLACKWELL_PROFILE.md](docs/BLACKWELL_PROFILE.md).
+See [docs/BOOTSTRAP_SCRIPTS.md](docs/BOOTSTRAP_SCRIPTS.md), [docs/BLACKWELL_PROFILE.md](docs/BLACKWELL_PROFILE.md), [docs/ROADMAP.md](docs/ROADMAP.md), and [docs/IMPLEMENTATION_STATUS.md](docs/IMPLEMENTATION_STATUS.md).
+
+- [docs/ROADMAP.md](docs/ROADMAP.md) — implementation phases and release gates.
+- [docs/IMPLEMENTATION_STATUS.md](docs/IMPLEMENTATION_STATUS.md) — what is committed versus not yet implemented or tested.
+
 
 - [bootstrap/Test-ComfyUI.ps1](bootstrap/Test-ComfyUI.ps1) — checks the local ComfyUI API and optionally probes CUDA using the selected isolated Python interpreter.
 - [docs/BLACKWELL_PROFILE.md](docs/BLACKWELL_PROFILE.md) — RTX 5090-specific test plan, including LTX Blackwell NVFP4 evaluation.
