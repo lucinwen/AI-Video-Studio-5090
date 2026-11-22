@@ -170,3 +170,18 @@ Before asking the agent to install anything, double-click `PREFLIGHT.bat` in the
 Then ask the agent to read the generated JSON/Markdown report and map the Samsung physical disk to its mounted volume. Do not guess the drive letter. The workspace initializer supports `-WhatIf` and creates directories only; it does not format or repartition.
 
 The first milestone is **verified storage root + clean ComfyUI baseline**, not downloading every model. Follow [docs/BOOTSTRAP_SCRIPTS.md](docs/BOOTSTRAP_SCRIPTS.md).
+
+---
+
+## V3 one-click core bootstrap
+
+For a new Windows 11 workstation, after cloning this repository:
+1. Run `INSTALL-V3.bat` from Explorer or PowerShell.
+2. Review the preflight report.
+3. Confirm the detected Samsung SSD volume by typing `CREATE`.
+4. Review the `-WhatIf` folder plan and type `CONTINUE`.
+5. If the workspace already contains files, explicitly type `PRESERVE` to allow only missing folders/config files to be added.
+6. If 7-Zip is missing, type `INSTALL` only if you approve the winget installation.
+7. Wait for official ComfyUI NVIDIA Portable download, archive integrity test, extraction, and runtime manifest.
+
+The installer refuses to overwrite an existing ComfyUI runtime. If it stops, preserve the staging archive and logs, read the error, and fix the cause before rerunning. It does not install video models or third-party nodes yet.
