@@ -56,7 +56,7 @@ test('I2V upload, trusted graph, status, generated result and Range/download res
   const s=await open({presets:{image},request,stateDir});t.after(s.stop);
   a.equal(await(await fetch(s.base)).text(),'<p>studio fixture</p>');
   const status=await(await fetch(s.base+'/api/status')).json();
-  a.equal(status.ready,true);a.equal(status.imageRequired,true);a.deepEqual(status.capabilities,{text:false,image:true});
+  a.equal(status.ready,true);a.equal(status.imageRequired,true);a.deepEqual(status.capabilities,{text:false,image:true,still:false});
   a.equal((await s.post({prompt:'look',image:imageData},'https://elsewhere.example')).status,403);
   a.equal((await s.post({prompt:'look',image:'data:image/png;base64,AAAA'})).status,400);
   a.equal((await s.post({prompt:'look'})).status,409);
